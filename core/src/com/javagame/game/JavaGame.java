@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -52,7 +53,7 @@ public class JavaGame extends ApplicationAdapter {
 		playerSprite = new Texture(Gdx.files.internal("player.png"));
 		batch = new SpriteBatch();
 		player = new Rectangle();
-		player.setCenter(8,8);
+		//player.setCenter(8,8);
 		player.width = 16;
 		player.height = 16;
 		player.x = WORLD_WIDTH / 2;
@@ -66,9 +67,9 @@ public class JavaGame extends ApplicationAdapter {
 		Vector3 moveMag = MovementMath.lengthDir(MovementMath.pointDir(new Vector3(0,0,0),moveVect),MovementMath.pointDis(new Vector3(0,0,0),moveVect));
 		float xadd = moveMag.x*SPEED* Gdx.graphics.getDeltaTime();
 		float yadd = moveMag.y*SPEED* Gdx.graphics.getDeltaTime();
-		if (xadd>96&&xadd<WORLD_WIDTH-96)
+		if (player.x-xadd>96&&player.x+xadd<WORLD_WIDTH-96)
 			player.x += xadd;
-		if (xadd>64&&xadd<WORLD_WIDTH-64)
+		if (player.y+yadd>64&&player.y-yadd<WORLD_WIDTH-64)
 			player.y += yadd;
 
 		cam.position.set(player.x,player.y, 0);
@@ -85,7 +86,7 @@ public class JavaGame extends ApplicationAdapter {
 			for(int y =  0; y<TILE_HEIGHT;y++)
 				batch.draw(grasstile,x*16,y*16);
 		batch.draw(playerSprite,player.x,player.y);
-		//font.draw(batch, player.x+"\n"+player.y, player.x,player.y);
+		font.draw(batch, player.x+"\n"+player.y, player.x,player.y);
 		batch.end();
 	}
 
@@ -93,6 +94,7 @@ public class JavaGame extends ApplicationAdapter {
 	public void dispose() {
 		playerSprite.dispose();
 		batch.dispose();
+		generator.dispose();
 	}
 	//.overlaps() 
 }
