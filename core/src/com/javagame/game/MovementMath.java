@@ -3,6 +3,8 @@ package com.javagame.game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Circle;
 
 public class MovementMath {
     //trig
@@ -22,6 +24,9 @@ public class MovementMath {
     }
     static public float pointDis(Vector3 pointa, Vector3 pointb){
         return (float) Math.sqrt(Math.pow(pointb.y-pointa.y,2)+Math.pow(pointb.x-pointa.x,2));
+    }
+    static public Vector3 midpoint(Vector3 pointa, Vector3 pointb){
+        return new Vector3((pointa.x+pointb.x)/2,(pointa.y+pointb.y)/2,0);
     }
 
     //input
@@ -60,5 +65,17 @@ public class MovementMath {
             }
         }
         return dir;
+    }
+
+    static public boolean overlaps(Circle circ, Rectangle rect){
+        float circledistx = Math.abs((circ.x+circ.radius) - (rect.x+rect.width/2));
+        float circledisty = Math.abs((circ.y+circ.radius) - (rect.y+rect.width/2));
+
+        if (circledistx > (rect.width/2 + circ.radius)||circledisty > (rect.height/2 + circ.radius)) { return false; }
+        else if (circledistx <= (rect.width/2)||(circledisty <= (rect.height/2))) { return true; } 
+
+        float cornerdist = (float) Math.pow(circledistx,2) + (float) Math.pow(circledisty,2);
+
+        return (cornerdist <= Math.pow(circ.radius,2));
     }
 }
