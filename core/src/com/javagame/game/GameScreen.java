@@ -16,10 +16,11 @@ import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.utils.TimeUtils;
 
 /*
 import com.badlogic.gdx.ApplicationListener;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.math.MathUtils;
@@ -55,12 +56,22 @@ public class GameScreen implements Screen{
 	private Texture playerTexture;
 	private Sprite playerSprite;
 	private float playerrot = 0;
+	private Array<Ball> redballs = new Array<Ball>();
+	private boolean canreleaseball = false;
+	private Texture balltext;
+	private float ballsize = 8;
+	private Vector3 kb = new Vector3(0, 0, 0);
 	
-	//p1
+	//p2
 	private Circle player2;
 	private Texture playerTexture2;
 	private Sprite playerSprite2;
-	private float playerrot2 = 0;
+	private float playerrot2 = 180;
+	private Array<Ball> blueballs = new Array<Ball>();
+	private boolean canreleaseball2 = false;
+	private Texture balltext2;
+	private float ballsize2 = 8;
+	private Vector3 kb2 = new Vector3(0, 0, 0);
 
 	private Vector3 spawn1 = new Vector3(162, WORLD_HEIGHT/2,0);
 	private Vector3 spawn2 = new Vector3(WORLD_WIDTH / 2, 162,0);
@@ -77,7 +88,6 @@ public class GameScreen implements Screen{
 			tilecol[i] = false;
 			tilecol2[i] = false;
 		}
-		System.out.print(tilerects[0].getWidth());
 		batch = new SpriteBatch();
 
 		tiletexture = new Texture("Tiles.png");
@@ -85,9 +95,9 @@ public class GameScreen implements Screen{
 
 		//p1 setup
 		playerTexture = new Texture(Gdx.files.internal("redplayer.png"));
+		balltext = new Texture(Gdx.files.internal("redball.png"));
 		playerSprite = new Sprite(playerTexture, 0, 0, 64, 64);
 		playerSprite.setRotation(playerrot);
-		//playerSprite.setOrigin(playerSprite.getWidth()/2,playerSprite.getHeight()/2);
 		
 		player = new Circle();
 		player.radius = playerSprite.getWidth()/2;
@@ -95,9 +105,9 @@ public class GameScreen implements Screen{
 
 		//p2 setup
 		playerTexture2 = new Texture(Gdx.files.internal("blueplayer.png"));
+		balltext2 = new Texture(Gdx.files.internal("blueball.png"));
 		playerSprite2 = new Sprite(playerTexture2, 0, 0, 64, 64);
 		playerSprite2.setRotation(playerrot2);
-		//playerSprite2.setOrigin(playerSprite2.getWidth()/2,playerSprite2.getHeight()/2);
 		
 		player2 = new Circle();
 		player2.radius = playerSprite2.getWidth()/2;
@@ -111,35 +121,85 @@ public class GameScreen implements Screen{
 	private void handleInput() {
 		//p1
 		Vector3 moveVect = MovementMath.InputDir(0);
-		playerrot = MovementMath.pointDir(new Vector3(0,0,0),moveVect);
 		float playermag = MovementMath.pointDis(new Vector3(0,0,0),moveVect);
-		Vector3 moveMag = MovementMath.lengthDir(playerrot,playermag);
+		Vector3 moveMag = new Vector3(0, 0, 0);
+		if(playermag!=0) {
+			playerrot = MovementMath.pointDir(new Vector3(0,0,0),moveVect);
+			moveMag = MovementMath.lengthDir(playerrot,playermag);
+		}
 		
 		float xadd = moveMag.x*SPEED* Gdx.graphics.getDeltaTime();
 		float yadd = moveMag.y*SPEED* Gdx.graphics.getDeltaTime();
 		
-		player.x += xadd;
-		player.y += yadd;
+		kb.x*=0.8f;
+		kb.y*=0.8f;
+
+		player.x += xadd+kb.x*Gdx.graphics.getDeltaTime();
+		player.y += yadd+kb.y*Gdx.graphics.getDeltaTime();
 		if(playermag!=0) {
 			playerSprite.setRotation((float)Math.toDegrees((float)playerrot));
 		}
 		playerSprite.setPosition(player.x,player.y);
+		if (!Gdx.input.isKeyPressed(Input.Keys.SPACE)&&canreleaseball) {
+			canreleaseball =false;
+			Ball ball = new Ball();
+			ball.rotation = playerrot;
+			ball.changeColor("red");
+			Vector3 ballpos = MovementMath.lengthDir(playerrot,40f);
+			Vector3 ballvel = MovementMath.lengthDir(playerrot,ballsize*10+400f);
+			ball.circ.setPosition(player.x+ballpos.x+28, player.y+ballpos.y+28);
+			ball.velocity = ballvel;
+			ball.ballsprite.setRotation(playerrot);
+			ball.ballsprite.setScale(ballsize/8);
+			ball.circ.radius = ballsize/2;
+			ballsize = 8;
+			redballs.add(ball);
+		}
+		if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)&&!canreleaseball) {
+			canreleaseball = true;
+		}
 
 		//p2
 		Vector3 moveVect2 = MovementMath.InputDir(1);
-		playerrot2 = MovementMath.pointDir(new Vector3(0,0,0),moveVect2);
 		float playermag2 = MovementMath.pointDis(new Vector3(0,0,0),moveVect2);
-		Vector3 moveMag2 = MovementMath.lengthDir(playerrot2,playermag2);
+		Vector3 moveMag2 = new Vector3(0, 0, 0);
+		if(playermag2!=0) {
+			playerrot2 = MovementMath.pointDir(new Vector3(0,0,0),moveVect2);
+			moveMag2 = MovementMath.lengthDir(playerrot2,playermag2);
+		}
 		
 		float xadd2 = moveMag2.x*SPEED2* Gdx.graphics.getDeltaTime();
 		float yadd2 = moveMag2.y*SPEED2* Gdx.graphics.getDeltaTime();
 		
-		player2.x += xadd2;
-		player2.y += yadd2;
+		kb2.x*=0.8f;
+		kb2.y*=0.8f;
+
+		player2.x += xadd2+kb2.x* Gdx.graphics.getDeltaTime();
+		player2.y += yadd2+kb2.y* Gdx.graphics.getDeltaTime();
 		if(playermag2!=0) {
 			playerSprite2.setRotation((float)Math.toDegrees((float)playerrot2));
 		}
 		playerSprite2.setPosition(player2.x,player2.y);
+
+		if (!Gdx.input.isKeyPressed(Input.Keys.M)&&canreleaseball2) {
+			canreleaseball2 = false;
+			Ball ball2 = new Ball();
+			ball2.rotation = playerrot2;
+			ball2.changeColor("blue");
+			Vector3 ballpos2 = MovementMath.lengthDir(playerrot2,40f);
+			Vector3 ballvel = MovementMath.lengthDir(playerrot2,ballsize2*10+400f);
+			ball2.circ.setPosition(player2.x+ballpos2.x+28, player2.y+ballpos2.y+28);
+			ball2.velocity = ballvel;
+			ball2.ballsprite.setRotation(playerrot2);
+			ball2.ballsprite.setScale(ballsize2/8);
+			ball2.circ.radius = ballsize2/2;
+			ballsize2 = 8;
+			blueballs.add(ball2);
+		}
+
+		if (Gdx.input.isKeyJustPressed(Input.Keys.M)&&!canreleaseball2) {
+			canreleaseball2 = true;
+		}
 
 		//cam
 		Vector3 cammp = MovementMath.midpoint(new Vector3(player.x+32,player.y+32,0),new Vector3(player2.x+32,player2.y+32,0));
@@ -156,7 +216,6 @@ public class GameScreen implements Screen{
 		
 		handleInput();
 
-		//System.out.println(searchBoolArray(tilecol,true));
 		cam.update();
 		
 		batch.setProjectionMatrix(cam.combined);
@@ -171,6 +230,30 @@ public class GameScreen implements Screen{
 			if(MovementMath.overlaps(player2,tilerects[i])) {
 				tilecol2[i] = true;
 			}
+		}
+		for (Iterator<Ball> iter = redballs.iterator(); iter.hasNext(); ) {
+			Ball curball = iter.next();
+			curball.circ.x+=curball.velocity.x*Gdx.graphics.getDeltaTime();
+			curball.circ.y+=curball.velocity.y*Gdx.graphics.getDeltaTime();
+			curball.ballsprite.setPosition(curball.circ.x,curball.circ.y);
+			if(MovementMath.overlaps(curball.circ,player2)) {
+				kb2.x=curball.velocity.x;
+				kb2.y=curball.velocity.y; 
+				iter.remove();
+			}
+			else {curball.ballsprite.draw(batch); }
+		}
+		for (Iterator<Ball> iter = blueballs.iterator(); iter.hasNext(); ) {
+			Ball curball = iter.next();
+			curball.circ.x+=curball.velocity.x*Gdx.graphics.getDeltaTime();
+			curball.circ.y+=curball.velocity.y*Gdx.graphics.getDeltaTime();
+			curball.ballsprite.setPosition(curball.circ.x,curball.circ.y);
+			if(MovementMath.overlaps(curball.circ,player)) {
+				kb.x=curball.velocity.x*2;
+				kb.y=curball.velocity.y*2;
+				iter.remove();
+			}
+			else {curball.ballsprite.draw(batch); }
 		}
 		if(!searchBoolArray(tilecol, true)){
 			ran = random.nextInt(4);
@@ -214,9 +297,18 @@ public class GameScreen implements Screen{
 				}
 			}
 		}
+		if(canreleaseball){
+			ballsize+=Gdx.graphics.getDeltaTime()*10;
+			Vector3 ballpos = MovementMath.lengthDir(playerrot,40f);
+			batch.draw(balltext,player.x+ballpos.x+playerSprite.getWidth()/2-ballsize/2,player.y+ballpos.y+playerSprite.getHeight()/2-ballsize/2,ballsize,ballsize);
+		}
+		if(canreleaseball2){
+			ballsize2+=Gdx.graphics.getDeltaTime()*10;
+			Vector3 ballpos2 = MovementMath.lengthDir(playerrot2,40f);
+			batch.draw(balltext2,player2.x+ballpos2.x+playerSprite2.getWidth()/2-ballsize2/2,player2.y+ballpos2.y+playerSprite2.getHeight()/2-ballsize2/2,ballsize2,ballsize2);
+		}
 		playerSprite.draw(batch);
 		playerSprite2.draw(batch);
-		drawHitbox(debughitbox, player2, batch);
 		batch.end();
         
 		game.batch.begin();
@@ -251,6 +343,8 @@ public class GameScreen implements Screen{
 		playerTexture.dispose();
 		batch.dispose();
 		tiletexture.dispose();
+		balltext.dispose();
+		balltext2.dispose();
 	}
 	public void drawHitbox(Texture hitbox, Circle circle, SpriteBatch batch){
 		Sprite hitboxsprite = new Sprite(hitbox);
@@ -262,5 +356,21 @@ public class GameScreen implements Screen{
 			if (array[i]==search)
 			return true;
 		return false;
+	}
+
+	public class Ball {
+		Circle circ = new Circle();
+		float rotation = 0;
+		String color = "";
+		Vector3 velocity = new Vector3(0, 0, 0);
+		Sprite ballsprite;
+		public void changeColor(String col){
+			color = col;
+			if(col == "red"){
+				ballsprite = new Sprite(balltext);
+			} else{
+				ballsprite = new Sprite(balltext2);
+			}
+		}
 	}
 }
