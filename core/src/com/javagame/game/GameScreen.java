@@ -12,22 +12,20 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Circle;
-import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.utils.TimeUtils;
 
 /*
+import com.badlogic.gdx.utils.TimeUtils;
+import com.badlogic.gdx.math.Intersector;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
-import com.badlogic.gdx.utils.TimeUtils;
 import java.lang.Object;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import java.util.Iterator;
@@ -38,7 +36,9 @@ public class GameScreen implements Screen{
     static final int WORLD_WIDTH = 1108;
 	static final int WORLD_HEIGHT = 1108;
 	static final float SPEED = 140f;
+	static final float DASHSPEED = 1500f;
 	static final float SPEED2 = 140f;
+	static final float DASHSPEED2 = 1500f;
 	Random random = new Random();
 	int ran;
 	int rantile = -1;
@@ -51,7 +51,7 @@ public class GameScreen implements Screen{
 	private SpriteBatch batch;
     final JavaGame game;
 	private Texture tiletexture;
-	private Texture debughitbox;
+	//private Texture debughitbox= new Texture("debughitbox.png");;
 
 	//p1
 	private Circle player;
@@ -63,7 +63,9 @@ public class GameScreen implements Screen{
 	private Texture balltext;
 	private float ballsize = 8;
 	private Vector3 kb = new Vector3(0, 0, 0);
+	private Vector3 dashvel = new Vector3(0, 0, 0);
 	private int points = 0;
+	private float dashcooldown = 0;
 	
 	//p2
 	private Circle player2;
@@ -75,7 +77,9 @@ public class GameScreen implements Screen{
 	private Texture balltext2;
 	private float ballsize2 = 8;
 	private Vector3 kb2 = new Vector3(0, 0, 0);
+	private Vector3 dashvel2 = new Vector3(0, 0, 0);
 	private int points2 = 0;
+	private float dashcooldown2 = 0;
 
 	private Vector3 spawn1 = new Vector3(162, WORLD_HEIGHT/2,0);
 	private Vector3 spawn2 = new Vector3(WORLD_WIDTH / 2, 162,0);
@@ -95,7 +99,6 @@ public class GameScreen implements Screen{
 		batch = new SpriteBatch();
 
 		tiletexture = new Texture("Tiles.png");
-		debughitbox = new Texture("debughitbox.png");
 
 		//p1 setup
 		playerTexture = new Texture(Gdx.files.internal("redplayer.png"));
@@ -138,20 +141,26 @@ public class GameScreen implements Screen{
 		
 		kb.x*=0.8f;
 		kb.y*=0.8f;
+		dashvel.x*=0.8f;
+		dashvel.y*=0.8f;
 
-		player.x += xadd+kb.x*Gdx.graphics.getDeltaTime();
-		player.y += yadd+kb.y*Gdx.graphics.getDeltaTime();
+		player.x += xadd+kb.x*Gdx.graphics.getDeltaTime()+dashvel.x*Gdx.graphics.getDeltaTime();
+		player.y += yadd+kb.y*Gdx.graphics.getDeltaTime()+dashvel.y*Gdx.graphics.getDeltaTime();
 		if(playermag!=0) {
 			playerSprite.setRotation((float)Math.toDegrees((float)playerrot));
 		}
+		if (Gdx.input.isKeyJustPressed(Input.Keys.G)&&dashcooldown<=0){
+			dashvel = new Vector3(moveMag.x*DASHSPEED, moveMag.y*DASHSPEED,0);
+			dashcooldown = 20;
+		}
 		playerSprite.setPosition(player.x,player.y);
-		if (!Gdx.input.isKeyPressed(Input.Keys.SPACE)&&canreleaseball) {
+		if (!Gdx.input.isKeyPressed(Input.Keys.F)&&canreleaseball) {
 			canreleaseball =false;
 			Ball ball = new Ball();
 			ball.rotation = playerrot;
 			ball.changeColor("red");
 			Vector3 ballpos = MovementMath.lengthDir(playerrot,40f);
-			Vector3 ballvel = MovementMath.lengthDir(playerrot,ballsize*50+100f);
+			Vector3 ballvel = MovementMath.lengthDir(playerrot,ballsize*70+50f);
 			ball.circ.setPosition(player.x+ballpos.x+28, player.y+ballpos.y+28);
 			ball.velocity = ballvel;
 			ball.ballsprite.setRotation(playerrot);
@@ -160,7 +169,7 @@ public class GameScreen implements Screen{
 			ballsize = 8;
 			redballs.add(ball);
 		}
-		if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)&&!canreleaseball) {
+		if (Gdx.input.isKeyJustPressed(Input.Keys.F)&&!canreleaseball) {
 			canreleaseball = true;
 		}
 
@@ -178,21 +187,26 @@ public class GameScreen implements Screen{
 		
 		kb2.x*=0.8f;
 		kb2.y*=0.8f;
+		dashvel2.x*=0.8f;
+		dashvel2.y*=0.8f;
 
-		player2.x += xadd2+kb2.x* Gdx.graphics.getDeltaTime();
-		player2.y += yadd2+kb2.y* Gdx.graphics.getDeltaTime();
+		player2.x += xadd2+kb2.x* Gdx.graphics.getDeltaTime()+dashvel2.x*Gdx.graphics.getDeltaTime();
+		player2.y += yadd2+kb2.y* Gdx.graphics.getDeltaTime()+dashvel2.y*Gdx.graphics.getDeltaTime();
 		if(playermag2!=0) {
 			playerSprite2.setRotation((float)Math.toDegrees((float)playerrot2));
 		}
 		playerSprite2.setPosition(player2.x,player2.y);
-
-		if (!Gdx.input.isKeyPressed(Input.Keys.M)&&canreleaseball2) {
+		if (Gdx.input.isKeyJustPressed(Input.Keys.APOSTROPHE)&&dashcooldown2<=0){
+			dashvel2 = new Vector3(moveMag2.x*DASHSPEED2, moveMag2.y*DASHSPEED2,0);
+			dashcooldown2 = 20;
+		}
+		if (!Gdx.input.isKeyPressed(Input.Keys.SEMICOLON)&&canreleaseball2) {
 			canreleaseball2 = false;
 			Ball ball2 = new Ball();
 			ball2.rotation = playerrot2;
 			ball2.changeColor("blue");
 			Vector3 ballpos2 = MovementMath.lengthDir(playerrot2,40f);
-			Vector3 ballvel = MovementMath.lengthDir(playerrot2,ballsize2*50+100f);
+			Vector3 ballvel = MovementMath.lengthDir(playerrot2,ballsize2*70+50f);
 			ball2.circ.setPosition(player2.x+ballpos2.x+28, player2.y+ballpos2.y+28);
 			ball2.velocity = ballvel;
 			ball2.ballsprite.setRotation(playerrot2);
@@ -202,7 +216,7 @@ public class GameScreen implements Screen{
 			blueballs.add(ball2);
 		}
 
-		if (Gdx.input.isKeyJustPressed(Input.Keys.M)&&!canreleaseball2) {
+		if (Gdx.input.isKeyJustPressed(Input.Keys.SEMICOLON)&&!canreleaseball2) {
 			canreleaseball2 = true;
 		}
 
@@ -253,26 +267,28 @@ public class GameScreen implements Screen{
 		}
 		for (Iterator<Ball> iter = redballs.iterator(); iter.hasNext(); ) {
 			Ball curball = iter.next();
+			Vector3 pastcirc = new Vector3 (curball.circ.x,curball.circ.y,0);
 			curball.circ.x+=curball.velocity.x*Gdx.graphics.getDeltaTime();
 			curball.circ.y+=curball.velocity.y*Gdx.graphics.getDeltaTime();
 			curball.ballsprite.setPosition(curball.circ.x,curball.circ.y);
 			if(curball.circ.x<-10&&curball.circ.y<-10&&curball.circ.x>1120&&curball.circ.x>1120){
 				iter.remove();
-			} else if(MovementMath.overlaps(player2,curball.circ)) {
-				kb2.x=curball.velocity.x;
-				kb2.y=curball.velocity.y; 
+			} else if(MovementMath.lineCol(pastcirc,new Vector3 (curball.circ.x,curball.circ.y,0),player2)||MovementMath.overlaps(player2,curball.circ)) {
+				kb2.x=curball.velocity.x*2;
+				kb2.y=curball.velocity.y*2; 
 				iter.remove();
 			}
 			else {curball.ballsprite.draw(batch); }
 		}
 		for (Iterator<Ball> iter = blueballs.iterator(); iter.hasNext(); ) {
 			Ball curball = iter.next();
+			Vector3 pastcirc = new Vector3 (curball.circ.x,curball.circ.y,0);
 			curball.circ.x+=curball.velocity.x*Gdx.graphics.getDeltaTime();
 			curball.circ.y+=curball.velocity.y*Gdx.graphics.getDeltaTime();
 			curball.ballsprite.setPosition(curball.circ.x,curball.circ.y);
 			if(curball.circ.x<-10&&curball.circ.y<-10&&curball.circ.x>1120&&curball.circ.x>1120){
 				iter.remove();
-			} else if (MovementMath.overlaps(player,curball.circ)) {
+			} else if (MovementMath.lineCol(pastcirc,new Vector3 (curball.circ.x,curball.circ.y,0),player)||MovementMath.overlaps(player,curball.circ)) {
 				kb.x=curball.velocity.x*2;
 				kb.y=curball.velocity.y*2;
 				iter.remove();
@@ -281,7 +297,11 @@ public class GameScreen implements Screen{
 		}
 		if(!searchBoolArray(tilecol, true)){
 			points2++;
+			ballsize = 8;
+			ballsize2 = 8;
 			ran = random.nextInt(4);
+			kb = new Vector3(0, 0, 0);
+			kb2 = new Vector3(0, 0, 0);
 			for(int i = 0; i < tilecol.length; i++){
 				tilerects[i].setWidth(196);
 				tilerects[i].setHeight(196);
@@ -289,6 +309,8 @@ public class GameScreen implements Screen{
 				rantile = -1;
 				rantilerespawn = -1;
 			}
+			tilecol[0] = true;
+			tilecol2[0] = true;
 			switch (ran){
 				case 0:{
 					player.setPosition(spawn1.x-32,spawn1.y-32);
@@ -310,7 +332,11 @@ public class GameScreen implements Screen{
 		}
 		if(!searchBoolArray(tilecol2, true)){
 			points++;
+			ballsize = 8;
+			ballsize2 = 8;
 			ran = random.nextInt(4);
+			kb = new Vector3(0, 0, 0);
+			kb2 = new Vector3(0, 0, 0);
 			for(int i = 0; i < tilecol.length; i++){
 				tilerects[i].setWidth(196);
 				tilerects[i].setHeight(196);
@@ -318,6 +344,8 @@ public class GameScreen implements Screen{
 				rantile = -1;
 				rantilerespawn = -1;
 			}
+			tilecol[0] = true;
+			tilecol2[0] = true;
 			switch (ran){
 				case 0:{
 					player2.setPosition(spawn1.x-32,spawn1.y-32);
@@ -337,23 +365,39 @@ public class GameScreen implements Screen{
 				}
 			}
 		}
+		playerSprite.draw(batch);
+		playerSprite2.draw(batch);
+		if (dashcooldown>0){
+			dashcooldown-=Gdx.graphics.getDeltaTime()*10;
+		}
+		if (dashcooldown2>0){
+			dashcooldown2-=Gdx.graphics.getDeltaTime()*10;
+		}
 		if(canreleaseball){
-			ballsize+=Gdx.graphics.getDeltaTime()*10;
+			if (ballsize<80)
+				ballsize+=Gdx.graphics.getDeltaTime()*10;
 			Vector3 ballpos = MovementMath.lengthDir(playerrot,40f);
 			batch.draw(balltext,player.x+ballpos.x+playerSprite.getWidth()/2-ballsize/2,player.y+ballpos.y+playerSprite.getHeight()/2-ballsize/2,ballsize,ballsize);
 		}
 		if(canreleaseball2){
-			ballsize2+=Gdx.graphics.getDeltaTime()*10;
+			if (ballsize2<80)
+				ballsize2+=Gdx.graphics.getDeltaTime()*10;
 			Vector3 ballpos2 = MovementMath.lengthDir(playerrot2,40f);
 			batch.draw(balltext2,player2.x+ballpos2.x+playerSprite2.getWidth()/2-ballsize2/2,player2.y+ballpos2.y+playerSprite2.getHeight()/2-ballsize2/2,ballsize2,ballsize2);
 		}
-		playerSprite.draw(batch);
-		playerSprite2.draw(batch);
 		batch.end();
         
 		game.batch.begin();
-        game.font.draw(game.batch, "Player Points: "+points, 10, 470);
+        game.font.draw(game.batch, "Player1 Points: "+points, 10, 470);
 		game.font.draw(game.batch, "Player2 Points: "+points2, 470, 470);
+		if(dashcooldown<=0)
+			game.font.draw(game.batch, "Player1 can dash!", 10, 50);
+		else
+			game.font.draw(game.batch, "Player Dash Cooldown: "+(1+(int)dashcooldown/4), 10, 50);
+		if(dashcooldown2<=0)
+		game.font.draw(game.batch, "Player2 can dash!", 420, 50);
+		else
+			game.font.draw(game.batch, "Player2 Dash Cooldown: "+(1+(int)dashcooldown2/4), 420, 50);
         game.batch.end();
 	}
 

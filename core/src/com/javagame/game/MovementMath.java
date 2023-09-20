@@ -49,16 +49,16 @@ public class MovementMath {
                 break;
             }
             case 1: {
-                if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+                if (Gdx.input.isKeyPressed(Input.Keys.L)) {
                     dir.x +=1;
                 }
-                if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+                if (Gdx.input.isKeyPressed(Input.Keys.J)) {
                     dir.x += -1;
                 }
-                if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
+                if (Gdx.input.isKeyPressed(Input.Keys.I)) {
                     dir.y += 1;
                 }
-                if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
+                if (Gdx.input.isKeyPressed(Input.Keys.K)) {
                     dir.y += -1;
                 }
                 break;
@@ -84,5 +84,29 @@ public class MovementMath {
 
     static public boolean overlaps(Circle circ, Circle circ2){
         return (pointDis(new Vector3(circ.x+circ.radius, circ.y+circ.radius, 0),new Vector3(circ2.x+circ2.radius, circ2.y+circ2.radius, 0))<circ.radius+circ2.radius);
+    }
+
+    static public Vector3 getSlope(Vector3 pointa, Vector3 pointb){
+        Vector3 slope = new Vector3(pointa.x-pointb.x, pointa.y-pointb.y, 0);
+        return slope;
+    }
+    
+    static public boolean lineCol(Vector3 pointa, Vector3 pointb, Circle circ){
+        float rate = 10;
+        float dist = pointDis(pointa, pointb);
+        float repeat =(float)Math.ceil(dist/rate);
+        Vector3 curpoint = pointa;
+        Vector3 velocity = getSlope(pointa,pointb);
+        velocity.x /= repeat;
+        velocity.y /= repeat;
+        for(int i = 0; i<repeat;i++){
+            if(pointDis(curpoint, new Vector3(circ.x+circ.radius, circ.y+circ.radius, 0))<+circ.radius)
+                return true;
+            curpoint.x+=velocity.x;
+            curpoint.y+=velocity.y;
+        }
+
+
+        return false;
     }
 }
