@@ -68,6 +68,9 @@ public class MovementMath {
     }
 
     static public boolean overlaps(Circle circ, Rectangle rect){
+        if(rect.width+rect.height<=0){
+            return false;
+        }
         float circledistx = Math.abs((circ.x+circ.radius) - (rect.x+rect.width/2));
         float circledisty = Math.abs((circ.y+circ.radius) - (rect.y+rect.width/2));
 
@@ -80,6 +83,6 @@ public class MovementMath {
     }
 
     static public boolean overlaps(Circle circ, Circle circ2){
-        return (pointDis(new Vector3(circ.x+32, circ.y+32, 0),new Vector3(circ2.x+32, circ2.y+32, 0))<circ.radius+circ2.radius);
+        return (pointDis(new Vector3(circ.x+circ.radius, circ.y+circ.radius, 0),new Vector3(circ2.x+circ2.radius, circ2.y+circ2.radius, 0))<circ.radius+circ2.radius);
     }
 }

@@ -41,6 +41,8 @@ public class GameScreen implements Screen{
 	static final float SPEED2 = 140f;
 	Random random = new Random();
 	int ran;
+	int rantile = -1;
+	int rantilerespawn = -1;
 
 	private Rectangle tilerects[] = new Rectangle[25];
 	private boolean tilecol[] = new boolean[25];
@@ -61,6 +63,7 @@ public class GameScreen implements Screen{
 	private Texture balltext;
 	private float ballsize = 8;
 	private Vector3 kb = new Vector3(0, 0, 0);
+	private int points = 0;
 	
 	//p2
 	private Circle player2;
@@ -72,6 +75,7 @@ public class GameScreen implements Screen{
 	private Texture balltext2;
 	private float ballsize2 = 8;
 	private Vector3 kb2 = new Vector3(0, 0, 0);
+	private int points2 = 0;
 
 	private Vector3 spawn1 = new Vector3(162, WORLD_HEIGHT/2,0);
 	private Vector3 spawn2 = new Vector3(WORLD_WIDTH / 2, 162,0);
@@ -116,6 +120,7 @@ public class GameScreen implements Screen{
 		//cam setup
 		cam = new OrthographicCamera();
 		cam.setToOrtho(false, 704, 448);
+		cam.position.set(MovementMath.midpoint(new Vector3(player.x+player.radius,player.y+player.radius,0),new Vector3(player2.x+player.radius,player2.y+player.radius,0)));
 	}
 
 	private void handleInput() {
@@ -146,7 +151,7 @@ public class GameScreen implements Screen{
 			ball.rotation = playerrot;
 			ball.changeColor("red");
 			Vector3 ballpos = MovementMath.lengthDir(playerrot,40f);
-			Vector3 ballvel = MovementMath.lengthDir(playerrot,ballsize*10+400f);
+			Vector3 ballvel = MovementMath.lengthDir(playerrot,ballsize*50+100f);
 			ball.circ.setPosition(player.x+ballpos.x+28, player.y+ballpos.y+28);
 			ball.velocity = ballvel;
 			ball.ballsprite.setRotation(playerrot);
@@ -187,7 +192,7 @@ public class GameScreen implements Screen{
 			ball2.rotation = playerrot2;
 			ball2.changeColor("blue");
 			Vector3 ballpos2 = MovementMath.lengthDir(playerrot2,40f);
-			Vector3 ballvel = MovementMath.lengthDir(playerrot2,ballsize2*10+400f);
+			Vector3 ballvel = MovementMath.lengthDir(playerrot2,ballsize2*50+100f);
 			ball2.circ.setPosition(player2.x+ballpos2.x+28, player2.y+ballpos2.y+28);
 			ball2.velocity = ballvel;
 			ball2.ballsprite.setRotation(playerrot2);
@@ -202,12 +207,12 @@ public class GameScreen implements Screen{
 		}
 
 		//cam
-		Vector3 cammp = MovementMath.midpoint(new Vector3(player.x+32,player.y+32,0),new Vector3(player2.x+32,player2.y+32,0));
+		Vector3 cammp = MovementMath.midpoint(new Vector3(player.x+player.radius,player.y+player.radius,0),new Vector3(player2.x+player.radius,player2.y+player.radius,0));
 		float camdis = MovementMath.pointDis(cam.position,cammp);
 		float camdir = MovementMath.pointDir(cam.position,cammp);
 		Vector3 campos = MovementMath.lengthDir(camdir,camdis);
 		cam.position.set(cam.position.x+campos.x*.05f,cam.position.y+campos.y*.05f, 0);
-		cam.zoom = Math.max(.9f,MovementMath.pointDis(new Vector3(player.x, player.y, 0),new Vector3(player2.x, player2.y, 0))/392);
+		cam.zoom = Math.max(1f,MovementMath.pointDis(new Vector3(player.x, player.y, 0),new Vector3(player2.x, player2.y, 0))/392);
 	}
 
 	@Override
@@ -217,11 +222,26 @@ public class GameScreen implements Screen{
 		handleInput();
 
 		cam.update();
-		
+		if(random.nextInt(1000*(int)(1+Math.abs(Gdx.graphics.getDeltaTime())))==0){
+			if(rantile==-1)
+				rantile = random.nextInt(25);
+			else if (tilerects[rantile].width<=0){
+				rantile = random.nextInt(25);
+			}
+		} else if (rantile!=-1){
+			if (tilerects[rantile].width>0){
+				float changefactor = (float)Gdx.graphics.getDeltaTime()*10;
+				tilerects[rantile].width-=(changefactor);
+				tilerects[rantile].height-=(changefactor);
+				tilerects[rantile].x+=changefactor/2;
+				tilerects[rantile].y+=changefactor/2;
+			}
+		}
+
 		batch.setProjectionMatrix(cam.combined);
 		batch.begin();
 		for (int i = 0; i < tilerects.length; i++) {
-			batch.draw(tiletexture,tilerects[i].x,tilerects[i].y);
+			batch.draw(tiletexture,tilerects[i].x,tilerects[i].y,tilerects[i].width,tilerects[i].height);
 			tilecol[i] =false;
 			tilecol2[i] =false;
 			if(MovementMath.overlaps(player,tilerects[i])) {
@@ -236,7 +256,9 @@ public class GameScreen implements Screen{
 			curball.circ.x+=curball.velocity.x*Gdx.graphics.getDeltaTime();
 			curball.circ.y+=curball.velocity.y*Gdx.graphics.getDeltaTime();
 			curball.ballsprite.setPosition(curball.circ.x,curball.circ.y);
-			if(MovementMath.overlaps(curball.circ,player2)) {
+			if(curball.circ.x<-10&&curball.circ.y<-10&&curball.circ.x>1120&&curball.circ.x>1120){
+				iter.remove();
+			} else if(MovementMath.overlaps(player2,curball.circ)) {
 				kb2.x=curball.velocity.x;
 				kb2.y=curball.velocity.y; 
 				iter.remove();
@@ -248,7 +270,9 @@ public class GameScreen implements Screen{
 			curball.circ.x+=curball.velocity.x*Gdx.graphics.getDeltaTime();
 			curball.circ.y+=curball.velocity.y*Gdx.graphics.getDeltaTime();
 			curball.ballsprite.setPosition(curball.circ.x,curball.circ.y);
-			if(MovementMath.overlaps(curball.circ,player)) {
+			if(curball.circ.x<-10&&curball.circ.y<-10&&curball.circ.x>1120&&curball.circ.x>1120){
+				iter.remove();
+			} else if (MovementMath.overlaps(player,curball.circ)) {
 				kb.x=curball.velocity.x*2;
 				kb.y=curball.velocity.y*2;
 				iter.remove();
@@ -256,7 +280,15 @@ public class GameScreen implements Screen{
 			else {curball.ballsprite.draw(batch); }
 		}
 		if(!searchBoolArray(tilecol, true)){
+			points2++;
 			ran = random.nextInt(4);
+			for(int i = 0; i < tilecol.length; i++){
+				tilerects[i].setWidth(196);
+				tilerects[i].setHeight(196);
+				tilerects[i].setPosition((((i%5)*196)+64),(float)(Math.floor(i/5f)*196+64));
+				rantile = -1;
+				rantilerespawn = -1;
+			}
 			switch (ran){
 				case 0:{
 					player.setPosition(spawn1.x-32,spawn1.y-32);
@@ -277,7 +309,15 @@ public class GameScreen implements Screen{
 			}
 		}
 		if(!searchBoolArray(tilecol2, true)){
+			points++;
 			ran = random.nextInt(4);
+			for(int i = 0; i < tilecol.length; i++){
+				tilerects[i].setWidth(196);
+				tilerects[i].setHeight(196);
+				tilerects[i].setPosition((((i%5)*196)+64),(float)(Math.floor(i/5f)*196+64));
+				rantile = -1;
+				rantilerespawn = -1;
+			}
 			switch (ran){
 				case 0:{
 					player2.setPosition(spawn1.x-32,spawn1.y-32);
@@ -312,8 +352,8 @@ public class GameScreen implements Screen{
 		batch.end();
         
 		game.batch.begin();
-        game.font.draw(game.batch, "Player X: "+player.x+"\nPlayer Y: "+player.y, 10, 470);
-		game.font.draw(game.batch, "Player2 X: "+player2.x+"\nPlayer2 Y: "+player2.y, 370, 470);
+        game.font.draw(game.batch, "Player Points: "+points, 10, 470);
+		game.font.draw(game.batch, "Player2 Points: "+points2, 470, 470);
         game.batch.end();
 	}
 
