@@ -70,6 +70,7 @@ public class GameScreen implements Screen{
 	private float dashcooldown = 0;
 	private int playerpower = -1;
 	private float playerpowercooldown = -1;
+	private float spawnprot = 20.0f;
 	
 	//p2
 	private Circle player2;
@@ -86,6 +87,7 @@ public class GameScreen implements Screen{
 	private float dashcooldown2 = 0;
 	private int playerpower2 = -1;
 	private float playerpowercooldown2 = -1;
+	private float spawnprot2 = 20.0f;
 
 	private Vector3 spawn1 = new Vector3(162, WORLD_HEIGHT/2,0);
 	private Vector3 spawn2 = new Vector3(WORLD_WIDTH / 2, 162,0);
@@ -146,7 +148,7 @@ public class GameScreen implements Screen{
 			xadd = moveMag.x*SPEED* Gdx.graphics.getDeltaTime();
 			yadd = moveMag.y*SPEED* Gdx.graphics.getDeltaTime();
 		}
-		if (Gdx.input.isKeyJustPressed(Input.Keys.G)&&dashcooldown<=0){
+		if (Gdx.input.isKeyJustPressed(Input.Keys.G)&&dashcooldown<=0&&(moveVect.x!=0||moveVect.y!=0)){
 			dashvel = new Vector3(moveMag.x*DASHSPEED, moveMag.y*DASHSPEED,0);
 			dashcooldown = 20;
 		}
@@ -201,6 +203,7 @@ public class GameScreen implements Screen{
 				ball.circ.radius = ballsize/2;
 				redballs.add(ball);
 			}
+			spawnprot = -1;
 			ballsize = 8;
 		}
 		if (Gdx.input.isKeyJustPressed(Input.Keys.F)&&!canreleaseball) {
@@ -218,7 +221,7 @@ public class GameScreen implements Screen{
 			xadd2 = moveMag2.x*SPEED2* Gdx.graphics.getDeltaTime();
 			yadd2 = moveMag2.y*SPEED2* Gdx.graphics.getDeltaTime();
 		}
-		if (Gdx.input.isKeyJustPressed(Input.Keys.RIGHT_BRACKET)&&dashcooldown2<=0){
+		if (Gdx.input.isKeyJustPressed(Input.Keys.RIGHT_BRACKET)&&dashcooldown2<=0&&(moveVect2.x!=0||moveVect2.y!=0)){
 			dashvel2 = new Vector3(moveMag2.x*DASHSPEED2, moveMag2.y*DASHSPEED2,0);
 			dashcooldown2 = 20;
 		}
@@ -273,6 +276,7 @@ public class GameScreen implements Screen{
 				ball2.circ.radius = ballsize2/2;
 				blueballs.add(ball2);
 			}
+			spawnprot2 = -1;
 			ballsize2 = 8;
 		}
 
@@ -293,10 +297,14 @@ public class GameScreen implements Screen{
 			if(moveVect2.x==0&&moveVect2.y==0) {
 				p2canmove = 0;
 			}
-			kb.x+=p1canmove*bumpvel1flip.x+p2canmove*bumpvel2.x;
-			kb.y+=p1canmove*bumpvel1flip.y+p2canmove*bumpvel2.y;
-			kb2.x+=p1canmove*bumpvel1.x+p2canmove*bumpvel2flip.x;
-			kb2.y+=p1canmove*bumpvel1.y+p2canmove*bumpvel2flip.y;
+			if (spawnprot<=0){
+				kb.x+=p1canmove*bumpvel1flip.x+p2canmove*bumpvel2.x;
+				kb.y+=p1canmove*bumpvel1flip.y+p2canmove*bumpvel2.y;
+			}
+			if (spawnprot2<=0){
+				kb2.x+=p1canmove*bumpvel1.x+p2canmove*bumpvel2flip.x;
+				kb2.y+=p1canmove*bumpvel1.y+p2canmove*bumpvel2flip.y;
+			}
 		}
 
 		//cam
@@ -330,24 +338,24 @@ public class GameScreen implements Screen{
 				tilerects[rantile].y+=changefactor/2;
 			}
 		}
-		if(random.nextInt(1000*(int)(1+Math.abs(Gdx.graphics.getDeltaTime())))==0){
+		if(random.nextInt(1500*(int)(1+Math.abs(Gdx.graphics.getDeltaTime())))==0){
 			Power power = new Power();
 			power.type = (int)Math.random()%5;
 			switch (ran){
 				case 0:{
-					power.assignCircleValues(16,new Vector3(spawn1.x-32,spawn1.y-32, 0));
+					power.assignCircleValues(24,new Vector3(spawn1.x-32,spawn1.y-32, 0));
 					break;
 				}
 				case 1:{
-					power.assignCircleValues(16,new Vector3(spawn2.x-32,spawn2.y-32, 0));
+					power.assignCircleValues(24,new Vector3(spawn2.x-32,spawn2.y-32, 0));
 					break;
 				}
 				case 2:{
-					power.assignCircleValues(16,new Vector3(spawn3.x-32,spawn3.y-32, 0));
+					power.assignCircleValues(24,new Vector3(spawn3.x-32,spawn3.y-32, 0));
 					break;
 				}
 				case 3:{
-					power.assignCircleValues(16,new Vector3(spawn4.x-32,spawn4.y-32, 0));
+					power.assignCircleValues(24,new Vector3(spawn4.x-32,spawn4.y-32, 0));
 					break;
 				}
 			}
@@ -406,8 +414,10 @@ public class GameScreen implements Screen{
 			if(curball.circ.x<-10&&curball.circ.y<-10&&curball.circ.x>1120&&curball.circ.x>1120){
 				iter.remove();
 			} else if(MovementMath.lineCol(pastcirc,new Vector3 (curball.circ.x,curball.circ.y,0),player2)||MovementMath.overlaps(player2,curball.circ)) {
-				kb2.x+=curball.velocity.x*1.25f;
-				kb2.y+=curball.velocity.y*1.25f;
+				if (spawnprot2<=0){
+					kb2.x+=curball.velocity.x*1.25f;
+					kb2.y+=curball.velocity.y*1.25f;
+				}
 				iter.remove();
 			}
 			else {curball.ballsprite.draw(batch); }
@@ -421,8 +431,10 @@ public class GameScreen implements Screen{
 			if(curball.circ.x<-10&&curball.circ.y<-10&&curball.circ.x>1120&&curball.circ.x>1120){
 				iter.remove();
 			} else if (MovementMath.lineCol(pastcirc,new Vector3 (curball.circ.x,curball.circ.y,0),player)||MovementMath.overlaps(player,curball.circ)) {
-				kb.x+=curball.velocity.x*1.25f;
-				kb.y+=curball.velocity.y*1.25f;
+				if (spawnprot<=0){
+					kb.x+=curball.velocity.x*1.25f;
+					kb.y+=curball.velocity.y*1.25f;
+				}
 				iter.remove();
 			}
 			else {curball.ballsprite.draw(batch); }
@@ -434,6 +446,9 @@ public class GameScreen implements Screen{
 			ran = random.nextInt(4);
 			kb = new Vector3(0, 0, 0);
 			kb2 = new Vector3(0, 0, 0);
+			playerpower = 0;
+			playerpowercooldown = 0;
+			spawnprot = 40.0f;
 			for(int i = 0; i < tilecol.length; i++){
 				tilerects[i].setWidth(196);
 				tilerects[i].setHeight(196);
@@ -452,6 +467,9 @@ public class GameScreen implements Screen{
 			ran = random.nextInt(4);
 			kb = new Vector3(0, 0, 0);
 			kb2 = new Vector3(0, 0, 0);
+			playerpower2 = 0;
+			playerpowercooldown2 = 0;
+			spawnprot2 = 40.0f;
 			for(int i = 0; i < tilecol.length; i++){
 				tilerects[i].setWidth(196);
 				tilerects[i].setHeight(196);
@@ -463,13 +481,25 @@ public class GameScreen implements Screen{
 			tilecol2[0] = true;
 			player2.setPosition(WORLD_WIDTH/2-32,WORLD_HEIGHT/2-32);
 		}
-		playerSprite.draw(batch);
-		playerSprite2.draw(batch);
+		if (spawnprot<=0)
+			playerSprite.draw(batch,1);
+		else
+			playerSprite.draw(batch,.75f);
+		if (spawnprot2<=0)
+			playerSprite2.draw(batch,1);
+		else
+			playerSprite2.draw(batch,0.75f);
 		if (dashcooldown>0){
 			dashcooldown-=Gdx.graphics.getDeltaTime()*10;
 		}
 		if (dashcooldown2>0){
 			dashcooldown2-=Gdx.graphics.getDeltaTime()*10;
+		}
+		if (spawnprot>0){
+			spawnprot-=Gdx.graphics.getDeltaTime()*10;
+		}
+		if (spawnprot2>0){
+			spawnprot2-=Gdx.graphics.getDeltaTime()*10;
 		}
 		if (playerpowercooldown>0){
 			playerpowercooldown-=Gdx.graphics.getDeltaTime();
@@ -500,7 +530,7 @@ public class GameScreen implements Screen{
 			game.font.draw(batch, (1+(int)playerpowercooldown/4)+"", player.x+16,player.y+player.radius*2+24);
 		if (playerpowercooldown2!=-1)
 			game.font.draw(batch, (1+(int)playerpowercooldown2/4)+"", player2.x+16,player2.y+player.radius*2+24);
-			if(dashcooldown>0)
+		if(dashcooldown>0)
 			game.font.draw(batch, ""+(1+(int)dashcooldown/4), player.x+24,player.y);
 		if(dashcooldown2>0)
 			game.font.draw(batch, ""+(1+(int)dashcooldown2/4), player2.x+24,player2.y);

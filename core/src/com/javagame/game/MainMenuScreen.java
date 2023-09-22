@@ -24,7 +24,6 @@ public class MainMenuScreen implements Screen {
 
 		camera.update();
 		game.batch.setProjectionMatrix(camera.combined);
-
 		game.batch.begin();
 		game.font.setColor(0,0,0,1);
 		game.font.draw(game.batch, "Open Dodgeball", 250, 300);
