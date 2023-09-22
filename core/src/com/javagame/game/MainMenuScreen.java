@@ -20,17 +20,20 @@ public class MainMenuScreen implements Screen {
 
     @Override
 	public void render(float delta) {
-		ScreenUtils.clear(0, 0, 0.2f, 1);
+		ScreenUtils.clear(1, 1, 1f, 1);
 
 		camera.update();
 		game.batch.setProjectionMatrix(camera.combined);
 
 		game.batch.begin();
-		game.font.draw(game.batch, "Test", 400, 200);
-		game.font.draw(game.batch, "Tap anywhere to begin", 400, 300);
+		game.font.setColor(0,0,0,1);
+		game.font.draw(game.batch, "Open Dodgeball", 250, 300);
+		game.font.draw(game.batch, "Tap anywhere to begin", 250, 200);
+		
 		game.batch.end();
 
 		if (Gdx.input.isTouched()) {
+			game.font.setColor(1,1,1,1);
 			game.setScreen(new GameScreen(game));
 			dispose();
 		}
