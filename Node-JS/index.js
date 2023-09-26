@@ -14,10 +14,10 @@ server.listen(8080, function(){
 io.on('connection', async function(socket){
     var temproom = ("room"+Math.floor(players.length/2))
     socket.join(temproom);
-    players.push(new player(socket.id, 0, 0, 0));
 
+    players.push(new player(socket.id, 0, 0, 0));
     if(players.length %2 ==0){
-        socket.broadcast.to(temproom).emit('startGame', {seed: Math.random()});
+        socket.to(temproom).emit('startGame', {seed: Math.random()});
     }
     console.log("Player Connected!");
     socket.to(temproom).emit('socketID', { id: socket.id });
@@ -38,7 +38,7 @@ io.on('connection', async function(socket){
     });
     socket.on('playermove', function({x, y,rotation}){
         for(var i = 0; i < players.length; i++){
-            socket.broadcast.to(temproom).emit('movement', { id: socket.id,x,y,rotation});
+            socket.to(temproom).emit('movement', { id: socket.id,x,y,rotation});
             if(players[i].id == socket.id){
                 players[i].x = x;
                 players[i].y = y;
