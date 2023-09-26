@@ -1,12 +1,12 @@
 package com.javagame.game;
 
-import javax.swing.plaf.basic.BasicTabbedPaneUI.MouseHandler;
+//import javax.swing.plaf.basic.BasicTabbedPaneUI.MouseHandler;
 
-import org.w3c.dom.events.MouseEvent;
+//import org.w3c.dom.events.MouseEvent;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.Input.Keys;
+//import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.utils.ScreenUtils;
 
