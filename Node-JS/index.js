@@ -39,7 +39,7 @@ io.on("connection", (socket)=>{
             }
         }
     });
-    socket.on('playermove', function({x, y,rotation,xadd2,yadd2,moveVectx,moveVecty,kbaddx,kbaddy}){
+    socket.on('playermove', function({x, y,rotation,xadd2,yadd2,moveVectx,moveVecty,kbaddx,kbaddy,dashvelx,dashvely,spawnprot}){
         for(var i = 0; i < players.length; i++){
             if(players[i].id == socket.id){
                 players[i].x = x;
@@ -51,21 +51,46 @@ io.on("connection", (socket)=>{
                 players[i].moveVecty = moveVecty;
                 players[i].kbaddx = kbaddx;
                 players[i].kbaddy = kbaddy;
+                players[i].dashvelx = dashvelx;
+                players[i].dashvely = dashvely;
+                players[i].spawnprot = spawnprot;
 
                 io.to(temproom).emit('movement', {
-                    id: socket.id,
+                    id:players[i].id,
                     x:players[i].x,
                     y:players[i].y,
+                    spawnprot:players[i].spawnprot,
                     rotation:players[i].rotation,
                     xadd2:players[i].xadd2,
                     yadd2:players[i].yadd2,
                     moveVectx:players[i].moveVectx,
                     moveVecty:players[i].moveVecty,
                     kbaddx:players[i].kbaddx,
-                    kbaddy:players[i].kbaddy
+                    kbaddy:players[i].kbaddy,
+                    dashvelx:players[i].dashvelx,
+                    dashvely:players[i].dashvely
                 });
             }
         }
+    });
+    socket.on('shootmyball', function({ballcount,ballsize,color}){
+        for(var i = 0; i < players.length; i++){
+            if(players[i].id == socket.id){
+                io.to(temproom).emit('shootBullet', {
+                    id: socket.id,
+                    ballcount:ballcount,
+                    ballsize:ballsize,
+                    color:color
+                });
+            }
+        }
+    });
+    socket.on('updateserverpoints', function({id,ran,rantile}){
+        io.to(temproom).emit('updatePoints', {
+            id: id,
+            ran: ran,
+            rantile: rantile
+        });
     });
 });
 
@@ -80,4 +105,7 @@ function player(id, x, y,rot){
     this.moveVecty = 0;
     this.kbaddx = 0;
     this.kbaddy = 0;
+    this.dashvelx = 0;
+    this.dashvely = 0;
+    this.spawnprot = 0;
 }

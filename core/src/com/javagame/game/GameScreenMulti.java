@@ -41,8 +41,10 @@ import com.badlogic.gdx.Input.Keys;
 
 public class GameScreenMulti implements Screen {
 	private Socket socket;
-	private String myroom = "room1";
 	private boolean start = false;
+	private String mycolor = "red";
+	private String othercolor = "red";
+	private boolean createdplayers = false;
 	
 	static final int WORLD_WIDTH = 1108;
 	static final int WORLD_HEIGHT = 1108;
@@ -64,14 +66,13 @@ public class GameScreenMulti implements Screen {
 	final JavaGame game;
 	private Texture tiletexture;
 	private Array<Power> poweruparray = new Array<Power>();
-	// private Texture debughitbox= new Texture("debughitbox.png");
 
 	// p1
 	private Circle player;
 	private Texture playerTexture;
 	private Sprite playerSprite;
 	private float playerrot = 0;
-	private Array<Ball> redballs = new Array<Ball>();
+	private Array<Ball> myballs = new Array<Ball>();
 	private boolean canreleaseball = false;
 	private Texture balltext;
 	private float ballsize = 8;
@@ -89,16 +90,13 @@ public class GameScreenMulti implements Screen {
 	private Sprite playerSprite2;
 	private float playerrot2 = 180;
 	private Array<Ball> blueballs = new Array<Ball>();
-	private boolean canreleaseball2 = false;
 	private Texture balltext2;
 	private float ballsize2 = 8;
+	private float dashvel2x = 0;
+	private float dashvel2y = 0;
 	private float kbaddx = 0;
 	private float kbaddy = 0;
-	private Vector3 dashvel2 = new Vector3(0, 0, 0);
 	private int points2 = 0;
-	private float dashcooldown2 = 0;
-	private int playerpower2 = -1;
-	private float playerpowercooldown2 = -1;
 	private float spawnprot2 = 20.0f;
 	float xadd2 = 0;
 	float yadd2 = 0;
@@ -151,12 +149,15 @@ public class GameScreenMulti implements Screen {
 					String id1 = data.getJSONObject(data.length()-2).getString("id");
 					String id2 = data.getJSONObject(data.length()-1).getString("id");
 					if(myid.equals(id1)){
-						otherid = id2;}
+						otherid = id2;
+						mycolor = "red";
+						othercolor = "blue";
+					}
 					else if(myid.equals(id2)){
 						otherid = id1;
+						mycolor = "blue";
+						othercolor = "red";
 					}
-					
-					Gdx.app.log("SocketIO", "Other ID: " + otherid);
 				} catch (JSONException e) {
 
 				}
@@ -182,6 +183,7 @@ public class GameScreenMulti implements Screen {
 			public void call(Object... args) {
 				JSONObject data = (JSONObject) args[0];
 				try {
+					//other vars
 					start = true;
 					int seed = data.getInt("seed");
         			random = new Random(seed);
@@ -196,17 +198,69 @@ public class GameScreenMulti implements Screen {
 				JSONObject objects = (JSONObject) args[0];
 				try {
 					if (objects.getString("id").equals(otherid)){
-						double x = objects.getDouble("x");
-						double y = objects.getDouble("y");
-						playerrot2 = (float)objects.getDouble("rotation");
-						kb.x+= (float)objects.getDouble("kbaddx");
-						kb.y+= (float)objects.getDouble("kbaddy");
-						xadd2 = (float)objects.getDouble("xadd2");
-						yadd2 =  (float)objects.getDouble("yadd2");
-						moveVectx = (float)objects.getDouble("moveVectx");
-						moveVecty = (float)objects.getDouble("moveVecty");
-						player2.setPosition((float) x, (float) y);
+						float x = objects.getFloat("x");
+						float y = objects.getFloat("y");
+						player2.setPosition(x,y);
+						playerrot2 = objects.getFloat("rotation");
+						kb.x+= objects.getFloat("kbaddx");
+						kb.y+= objects.getFloat("kbaddy");
+						xadd2 = objects.getFloat("xadd2");
+						yadd2 =  objects.getFloat("yadd2");
+						moveVectx = objects.getFloat("moveVectx");
+						moveVecty = objects.getFloat("moveVecty");
+						dashvel2x = objects.getFloat("dashvelx");
+						dashvel2y = objects.getFloat("dashvely");
+						spawnprot2 = objects.getFloat("spawnprot");
 					}
+				} catch (JSONException e) {
+
+				}
+			}
+		}).on("shootBullet", new Emitter.Listener() {
+			@Override
+			public void call(Object... args) {
+				JSONObject objects = (JSONObject) args[0];
+				try {
+					if (objects.getString("id").equals(otherid)){
+						int ballamount = objects.getInt("ballcount");
+						float ballsize = (float)objects.getDouble("ballsize");
+						int mult = 0;
+						for (int i = 0; i<ballamount;i++){
+							if(i==1){
+								mult = 1;
+							} else if(i==2){
+								mult = -1;
+							}
+							Ball ball = new Ball();
+							ball.rotation = playerrot2;
+							ball.changeColor(objects.getString("color"));
+							System.out.println(ball.ballsprite);
+							Vector3 ballpos = MovementMath.lengthDir(playerrot2+0.349066f*mult, 40f);
+							Vector3 ballvel = MovementMath.lengthDir(playerrot2+0.349066f*mult, ballsize * 80 + 50f);
+							ball.circ.setPosition(player2.x + ballpos.x + 28, player2.y + ballpos.y + 28);
+							ball.velocity = ballvel;
+							ball.ballsprite.setRotation(playerrot2+0.349066f*mult);
+							ball.ballsprite.setScale(ballsize / 8);
+							ball.circ.radius = ballsize / 2;
+							blueballs.add(ball);
+						}
+					}
+				} catch (JSONException e) {
+
+				}
+			}
+		}).on("updatePoints", new Emitter.Listener() {
+			@Override
+			public void call(Object... args) {
+				JSONObject objects = (JSONObject) args[0];
+				try {
+					if(objects.getString("id").equals(myid)){
+						points++;
+					} else if (objects.getString("id").equals(otherid)){
+						points2++;
+					}
+					ran = objects.getInt("ran");
+					rantile = objects.getInt("rantile");
 				} catch (JSONException e) {
 
 				}
@@ -226,34 +280,13 @@ public class GameScreenMulti implements Screen {
 			tilecol[i] = false;
 			tilecol2[i] = false;
 		}
+
 		batch = new SpriteBatch();
-
-		tiletexture = new Texture("Tiles.png");
-
-		// p1 setup
-		playerTexture = new Texture(Gdx.files.internal("redplayer.png"));
-		balltext = new Texture(Gdx.files.internal("redball.png"));
-		playerSprite = new Sprite(playerTexture, 0, 0, 64, 64);
-		playerSprite.setRotation(playerrot);
-
 		player = new Circle();
-		player.radius = playerSprite.getWidth() / 2;
-		player.setPosition(spawn1.x - 32, spawn1.y - 32);
-		// p2 setup
-		playerTexture2 = new Texture(Gdx.files.internal("blueplayer.png"));
-		balltext2 = new Texture(Gdx.files.internal("blueball.png"));
-		playerSprite2 = new Sprite(playerTexture2, 0, 0, 64, 64);
-		playerSprite2.setRotation(playerrot2);
-
 		player2 = new Circle();
-		player2.radius = playerSprite2.getWidth() / 2;
-		player2.setPosition(spawn3.x - 32, spawn3.y - 32);
-
-		// cam setup
-		cam = new OrthographicCamera();
-		cam.setToOrtho(false, 704, 448);
-		cam.position.set(MovementMath.midpoint(new Vector3(player.x + player.radius, player.y + player.radius, 0),
-		new Vector3(player2.x + player.radius, player2.y + player.radius, 0)));
+		balltext = new Texture(Gdx.files.internal("redball.png"));
+		balltext2 = new Texture(Gdx.files.internal("blueball.png"));
+		tiletexture = new Texture("Tiles.png");
 	}
 
 	private void handleInput() {
@@ -275,8 +308,8 @@ public class GameScreenMulti implements Screen {
 
 		kb.x *= 0.8f;
 		kb.y *= 0.8f;
-		kbaddx*= 0.8f;
-		kbaddy *= 0.8f;
+		kbaddx*= 0.5f;
+		kbaddy *= 0.5f;
 		dashvel.x *= 0.8f;
 		dashvel.y *= 0.8f;
 
@@ -290,43 +323,38 @@ public class GameScreenMulti implements Screen {
 		playerSprite2.setPosition(player2.x, player2.y);
 		playerSprite2.setRotation((float) Math.toDegrees((float) playerrot2));
 		if (!Gdx.input.isKeyPressed(Input.Keys.F) && canreleaseball) {
-			canreleaseball = false;
-			Ball ball = new Ball();
-			ball.rotation = playerrot;
-			ball.changeColor("red");
-			Vector3 ballpos = MovementMath.lengthDir(playerrot, 40f);
-			Vector3 ballvel = MovementMath.lengthDir(playerrot, ballsize * 80 + 50f);
-			ball.circ.setPosition(player.x + ballpos.x + 28, player.y + ballpos.y + 28);
-			ball.velocity = ballvel;
-			ball.ballsprite.setRotation(playerrot);
-			ball.ballsprite.setScale(ballsize / 8);
-			ball.circ.radius = ballsize / 2;
-			redballs.add(ball);
-			if (playerpower == 0) {
-				ball = new Ball();
+			int ballamount = 0;
+			if(playerpower==0)
+				ballamount = 3;
+			else
+				ballamount = 1;
+			int mult = 0;
+			for (int i = 0; i<ballamount;i++){
+				if(i==1){
+					mult = 1;
+				} else if(i==2){
+					mult = -1;
+				}
+				Ball ball = new Ball();
 				ball.rotation = playerrot;
-				ball.changeColor("red");
-				ballpos = MovementMath.lengthDir(playerrot + 0.349066f, 40f);
-				ballvel = MovementMath.lengthDir(playerrot + 0.349066f, ballsize * 80 + 50f);
+				ball.changeColor(mycolor);
+				Vector3 ballpos = MovementMath.lengthDir(playerrot+0.349066f*mult, 40f);
+				Vector3 ballvel = MovementMath.lengthDir(playerrot+0.349066f*mult, ballsize * 80 + 50f);
 				ball.circ.setPosition(player.x + ballpos.x + 28, player.y + ballpos.y + 28);
 				ball.velocity = ballvel;
-				ball.ballsprite.setRotation(playerrot + 0.349066f);
+				ball.ballsprite.setRotation(playerrot+0.349066f*mult);
 				ball.ballsprite.setScale(ballsize / 8);
 				ball.circ.radius = ballsize / 2;
-				redballs.add(ball);
-
-				ball = new Ball();
-				ball.rotation = playerrot;
-				ball.changeColor("red");
-				ballpos = MovementMath.lengthDir(playerrot - 0.349066f, 40f);
-				ballvel = MovementMath.lengthDir(playerrot - 0.349066f, ballsize * 80 + 50f);
-				ball.circ.setPosition(player.x + ballpos.x + 28, player.y + ballpos.y + 28);
-				ball.velocity = ballvel;
-				ball.ballsprite.setRotation(playerrot - 0.349066f);
-				ball.ballsprite.setScale(ballsize / 8);
-				ball.circ.radius = ballsize / 2;
-				redballs.add(ball);
+				myballs.add(ball);
 			}
+
+			JSONObject data = new JSONObject();
+			data.put("ballcount", ballamount);
+			data.put("ballsize", ballsize);
+			data.put("color", mycolor);
+			socket.emit("shootmyball", data);
+
+			canreleaseball = false;
 			spawnprot = -1;
 			ballsize = 8;
 		}
@@ -334,7 +362,7 @@ public class GameScreenMulti implements Screen {
 			canreleaseball = true;
 		}
 		// bumping
-		if (MovementMath.overlaps(player, player2)&& (Math.abs(dashvel.x) + Math.abs(dashvel.y) + Math.abs(dashvel2.x) + Math.abs(dashvel2.y) < 50)) {
+		if (MovementMath.overlaps(player, player2)&& (Math.abs(dashvel.x) + Math.abs(dashvel.y) + Math.abs(dashvel2x) + Math.abs(dashvel2y) < 50)) {
 			Vector3 bumpvel1 = MovementMath.lengthDir(MovementMath.pointDir(new Vector3(0, 0, 0), new Vector3(xadd,yadd, 0)), 200f);
 			Vector3 bumpvel2 = MovementMath.lengthDir(MovementMath.pointDir(new Vector3(0, 0, 0), new Vector3(xadd2,yadd2, 0)), 200f);
 			Vector3 bumpvel1flip = MovementMath.lengthDir(MovementMath.pointDir(new Vector3(0, 0, 0), new Vector3(-xadd,-yadd, 0)), 200f);
@@ -368,23 +396,51 @@ public class GameScreenMulti implements Screen {
 		data.put("moveVecty", moveVecty);
 		data.put("kbaddx", kbaddx);
 		data.put("kbaddy", kbaddy);
+		data.put("dashvelx", dashvel.x);
+		data.put("dashvely", dashvel.y);
+		data.put("spawnprot", spawnprot);
 		socket.emit("playermove", data);
 
 		// cam
-		Vector3 cammp = MovementMath.midpoint(new Vector3(player.x + player.radius, player.y + player.radius, 0),
-		new Vector3(player2.x + player.radius, player2.y + player.radius, 0));
-		float camdis = MovementMath.pointDis(cam.position, cammp);
-		float camdir = MovementMath.pointDir(cam.position, cammp);
+		float camdis = MovementMath.pointDis(cam.position, new Vector3(player.x+player.radius,player.y+player.radius, 0));
+		float camdir = MovementMath.pointDir(cam.position, new Vector3(player.x+player.radius,player.y+player.radius, 0));
 		Vector3 campos = MovementMath.lengthDir(camdir, camdis);
 		cam.position.set(cam.position.x + campos.x * .05f, cam.position.y + campos.y * .05f, 0);
-		cam.zoom = Math.max(1.5f,
-		MovementMath.pointDis(new Vector3(player.x, player.y, 0), new Vector3(player2.x, player2.y, 0)) / 352);
+		cam.zoom = 1.5f;
 	}
 
 	@Override
 	public void render(float delta) {
 		ScreenUtils.clear(0, 0, 0, 1);
 		if (start){
+			if(!createdplayers){
+				createdplayers = true;
+				if(mycolor == "red"){
+					player.setPosition(spawn1.x-32, spawn1.y-32);
+					playerTexture = new Texture(Gdx.files.internal("redplayer.png"));
+					playerTexture2 = new Texture(Gdx.files.internal("blueplayer.png"));
+				}
+				else if(mycolor == "blue"){
+					player.setPosition(spawn3.x-32, spawn3.y-32);
+					playerTexture = new Texture(Gdx.files.internal("blueplayer.png"));
+					playerTexture2 = new Texture(Gdx.files.internal("redplayer.png"));
+				}
+				// p1 setup
+				playerSprite = new Sprite(playerTexture, 0, 0, 64, 64);
+				player.radius = playerSprite.getWidth() / 2;
+				playerSprite.setRotation(playerrot);
+
+				// p2 setup
+				playerSprite2 = new Sprite(playerTexture2, 0, 0, 64, 64);
+				player2.radius = playerSprite2.getWidth() / 2;
+				playerSprite2.setRotation(playerrot2);
+
+				// cam setup
+				cam = new OrthographicCamera();
+				cam.setToOrtho(false, 704, 448);
+				cam.position.set(player.x+player.radius,player.y+player.radius,0);
+				Gdx.app.log("SocketIO", "Other ID: " + otherid);
+			}
 			handleInput();
 
 			cam.update();
@@ -453,8 +509,6 @@ public class GameScreenMulti implements Screen {
 					playerpowercooldown = powerhit.getCooldown(playerpower);
 					iter.remove();
 				} else if (MovementMath.overlaps(player2, powerhit.hitbox)) {
-					playerpower2 = powerhit.type;
-					playerpowercooldown2 = powerhit.getCooldown(playerpower2);
 					iter.remove();
 				} else {
 					powerhit.powersprite.draw(batch);
@@ -468,8 +522,7 @@ public class GameScreenMulti implements Screen {
 				curball.ballsprite.setPosition(curball.circ.x, curball.circ.y);
 				if (curball.circ.x < -10 && curball.circ.y < -10 && curball.circ.x > 1120 && curball.circ.x > 1120) {
 					iter.remove();
-				} else if (MovementMath.lineCol(pastcirc, new Vector3(curball.circ.x, curball.circ.y, 0), player)
-						|| MovementMath.overlaps(player, curball.circ)) {
+				} else if (MovementMath.lineCol(pastcirc, new Vector3(curball.circ.x, curball.circ.y, 0), player)|| MovementMath.overlaps(player, curball.circ)) {
 					if (spawnprot <= 0) {
 						kb.x += curball.velocity.x * 1.25f;
 						kb.y += curball.velocity.y * 1.25f;
@@ -479,11 +532,23 @@ public class GameScreenMulti implements Screen {
 					curball.ballsprite.draw(batch);
 				}
 			}
+			for (Iterator<Ball> iter = myballs.iterator(); iter.hasNext();) {
+				Ball curball = iter.next();
+				Vector3 pastcirc = new Vector3(curball.circ.x, curball.circ.y, 0);
+				curball.circ.x += curball.velocity.x * Gdx.graphics.getDeltaTime();
+				curball.circ.y += curball.velocity.y * Gdx.graphics.getDeltaTime();
+				curball.ballsprite.setPosition(curball.circ.x, curball.circ.y);
+				if (curball.circ.x < -10 && curball.circ.y < -10 && curball.circ.x > 1120 && curball.circ.x > 1120) {
+					iter.remove();
+				} else if (MovementMath.lineCol(pastcirc, new Vector3(curball.circ.x, curball.circ.y, 0), player2)|| MovementMath.overlaps(player2, curball.circ)) {
+					iter.remove();
+				} else {
+					curball.ballsprite.draw(batch);
+				}
+			}
 			if (!searchBoolArray(tilecol, true)) {
-				points2++;
 				ballsize = 8;
 				ballsize2 = 8;
-				ran = random.nextInt(4);
 				kb = new Vector3(0, 0, 0);
 				playerpower = 0;
 				playerpowercooldown = 0;
@@ -492,21 +557,22 @@ public class GameScreenMulti implements Screen {
 					tilerects[i].setWidth(196);
 					tilerects[i].setHeight(196);
 					tilerects[i].setPosition((((i % 5) * 196) + 64), (float) (Math.floor(i / 5f) * 196 + 64));
-					rantile = random.nextInt(25);
 					rantilerespawn = -1;
 				}
 				tilecol[0] = true;
 				tilecol2[0] = true;
 				player.setPosition(WORLD_WIDTH / 2 - 32, WORLD_HEIGHT / 2 - 32);
+				JSONObject data = new JSONObject();
+				data.put("id",otherid);
+				data.put("ran",random.nextInt(4));
+				data.put("rantile",random.nextInt(25));
+				socket.emit("updateserverpoints",(data));
 			}
 			if (!searchBoolArray(tilecol2, true)) {
-				points++;
 				ballsize = 8;
 				ballsize2 = 8;
 				ran = random.nextInt(4);
 				kb = new Vector3(0, 0, 0);
-				playerpower2 = 0;
-				playerpowercooldown2 = 0;
 				spawnprot2 = 40.0f;
 				for (int i = 0; i < tilecol.length; i++) {
 					tilerects[i].setWidth(196);
@@ -518,6 +584,9 @@ public class GameScreenMulti implements Screen {
 				tilecol[0] = true;
 				tilecol2[0] = true;
 				player2.setPosition(WORLD_WIDTH / 2 - 32, WORLD_HEIGHT / 2 - 32);
+				JSONObject data = new JSONObject();
+				data.put("id",myid);
+				socket.emit("updatePoints",(data));
 			}
 			if (spawnprot <= 0)
 				playerSprite.draw(batch, 1);
@@ -530,14 +599,8 @@ public class GameScreenMulti implements Screen {
 			if (dashcooldown > 0) {
 				dashcooldown -= Gdx.graphics.getDeltaTime() * 10;
 			}
-			if (dashcooldown2 > 0) {
-				dashcooldown2 -= Gdx.graphics.getDeltaTime() * 10;
-			}
 			if (spawnprot > 0) {
 				spawnprot -= Gdx.graphics.getDeltaTime() * 10;
-			}
-			if (spawnprot2 > 0) {
-				spawnprot2 -= Gdx.graphics.getDeltaTime() * 10;
 			}
 			if (playerpowercooldown > 0) {
 				playerpowercooldown -= Gdx.graphics.getDeltaTime();
@@ -545,37 +608,20 @@ public class GameScreenMulti implements Screen {
 				playerpower = -1;
 				playerpowercooldown = -1;
 			}
-			if (playerpowercooldown2 > 0) {
-				playerpowercooldown2 -= Gdx.graphics.getDeltaTime();
-			} else {
-				playerpower2 = -1;
-				playerpowercooldown2 = -1;
-			}
 
 			if (canreleaseball) {
 				if (ballsize < 80)
 					ballsize += Gdx.graphics.getDeltaTime() * 10;
 				Vector3 ballpos = MovementMath.lengthDir(playerrot, 40f);
-				batch.draw(balltext, player.x + ballpos.x + playerSprite.getWidth() / 2 - ballsize / 2,
-						player.y + ballpos.y + playerSprite.getHeight() / 2 - ballsize / 2, ballsize, ballsize);
-			}
-			if (canreleaseball2) {
-				if (ballsize2 < 80)
-					ballsize2 += Gdx.graphics.getDeltaTime() * 10;
-				Vector3 ballpos2 = MovementMath.lengthDir(playerrot2, 40f);
-				batch.draw(balltext2, player2.x + ballpos2.x + playerSprite2.getWidth() / 2 - ballsize2 / 2,
-						player2.y + ballpos2.y + playerSprite2.getHeight() / 2 - ballsize2 / 2, ballsize2, ballsize2);
+				if(mycolor.equals("red"))
+					batch.draw(balltext, player.x + ballpos.x + playerSprite.getWidth() / 2 - ballsize / 2,player.y + ballpos.y + playerSprite.getHeight() / 2 - ballsize / 2, ballsize, ballsize);
+				else
+					batch.draw(balltext2, player.x + ballpos.x + playerSprite.getWidth() / 2 - ballsize / 2,player.y + ballpos.y + playerSprite.getHeight() / 2 - ballsize / 2, ballsize, ballsize);
 			}
 			if (playerpowercooldown != -1)
-				game.font.draw(batch, (1 + (int) playerpowercooldown / 4) + "", player.x + 16,
-						player.y + player.radius * 2 + 24);
-			if (playerpowercooldown2 != -1)
-				game.font.draw(batch, (1 + (int) playerpowercooldown2 / 4) + "", player2.x + 16,
-						player2.y + player.radius * 2 + 24);
+				game.font.draw(batch, (1 + (int) playerpowercooldown / 4) + "", player.x + 16,player.y + player.radius * 2 + 24);
 			if (dashcooldown > 0)
 				game.font.draw(batch, "" + (1 + (int) dashcooldown / 4), player.x + 24, player.y);
-			if (dashcooldown2 > 0)
-				game.font.draw(batch, "" + (1 + (int) dashcooldown2 / 4), player2.x + 24, player2.y);
 			batch.end();
 
 			game.batch.begin();
@@ -640,9 +686,9 @@ public class GameScreenMulti implements Screen {
 
 		public void changeColor(String col) {
 			color = col;
-			if (col == "red") {
+			if (col.equals("red")) {
 				ballsprite = new Sprite(balltext);
-			} else {
+			} else if (col.equals("blue")){
 				ballsprite = new Sprite(balltext2);
 			}
 		}
