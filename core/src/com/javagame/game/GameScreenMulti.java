@@ -2,6 +2,8 @@ package com.javagame.game;
 
 import java.util.Iterator;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import io.socket.client.IO;
 import io.socket.client.Socket;
@@ -109,7 +111,7 @@ public class GameScreenMulti implements Screen {
 
 	public void connectSocket() {
 		try {
-			socket = IO.socket("https://game.ejenda.org");
+			socket = IO.socket("wss://game2.ejenda.org");
 			socket.connect();
 		} catch (Exception e) {
 			socket.disconnect();
@@ -428,25 +430,30 @@ public class GameScreenMulti implements Screen {
 		}
 
 		//socket movement
-		JSONObject data = new JSONObject();
-		data.put("x", player.x);
-		data.put("y", player.y);
-		data.put("rotation", playerrot);
-		data.put("xadd2", xadd2);
-		data.put("yadd2", yadd2);
-		data.put("moveVectx", moveVectx);
-		data.put("moveVecty", moveVecty);
-		data.put("kbaddx", kbaddx);
-		data.put("kbaddy", kbaddy);
-		data.put("dashvelx", dashvel.x);
-		data.put("dashvely", dashvel.y);
-		data.put("spawnprot", spawnprot);
-		if(canreleaseball)
-			data.put("ballsize", ballsize);
-		else
-			data.put("ballsize", -1f);
-		data.put("mytime", Gdx.graphics.getDeltaTime());
-		socket.emit("playermove", data);
+		new Timer().scheduleAtFixedRate(new TimerTask(){
+			@Override
+			public void run(){
+				JSONObject data = new JSONObject();
+				data.put("x", player.x);
+				data.put("y", player.y);
+				data.put("rotation", playerrot);
+				data.put("xadd2", xadd2);
+				data.put("yadd2", yadd2);
+				data.put("moveVectx", moveVectx);
+				data.put("moveVecty", moveVecty);
+				data.put("kbaddx", kbaddx);
+				data.put("kbaddy", kbaddy);
+				data.put("dashvelx", dashvel.x);
+				data.put("dashvely", dashvel.y);
+				data.put("spawnprot", spawnprot);
+				if(canreleaseball)
+					data.put("ballsize", ballsize);
+				else
+					data.put("ballsize", -1f);
+				data.put("mytime", Gdx.graphics.getDeltaTime());
+				socket.emit("playermove", data);
+			}
+		},(long)100,(long)1000);
 
 		// cam
 		float camdis = MovementMath.pointDis(cam.position, new Vector3(player.x+player.radius,player.y+player.radius, 0));
