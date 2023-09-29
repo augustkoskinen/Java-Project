@@ -89,20 +89,6 @@ io.on("connection", (socket)=>{
             roomstructlist[(Math.floor(players.length/2))].time+=players[i].mytime;
         }
         roomstructlist[(Math.floor(players.length/2))].time/=players.length;
-        if (roomstructlist[(Math.floor(players.length/2))].tilerects[roomstructlist[(Math.floor(players.length/2))].rantile].width <= 0) {
-            roomstructlist[(Math.floor(players.length/2))].rantile = Math.floor(Math.random()*25);
-        } else if (roomstructlist[(Math.floor(players.length/2))].rantile != -1) {
-            if (roomstructlist[(Math.floor(players.length/2))].tilerects[roomstructlist[(Math.floor(players.length/2))].rantile].width > 0) {
-                var changefactor = roomstructlist[(Math.floor(players.length/2))].time * 5;
-                roomstructlist[(Math.floor(players.length/2))].tilerects[roomstructlist[(Math.floor(players.length/2))].rantile].width -= (changefactor);
-                roomstructlist[(Math.floor(players.length/2))].tilerects[roomstructlist[(Math.floor(players.length/2))].rantile].height -= (changefactor);
-                roomstructlist[(Math.floor(players.length/2))].tilerects[roomstructlist[(Math.floor(players.length/2))].rantile].x += changefactor / 2;
-                roomstructlist[(Math.floor(players.length/2))].tilerects[roomstructlist[(Math.floor(players.length/2))].rantile].y += changefactor / 2;
-                io.to(temproom).emit('setTiles', {
-                    jstilerects:roomstructlist[(Math.floor(players.length/2))].tilerects
-                });
-            }
-        }
         if (Math.floor(Math.random() *(1500 * (1 + roomstructlist[(Math.floor(players.length/2))].time))) == 0){
             io.to(temproom).emit('makePower', {
                 randpos:Math.random()*3
@@ -117,6 +103,22 @@ io.on("connection", (socket)=>{
                     ballcount:ballcount,
                     ballsize:ballsize,
                     color:color
+                });
+            }
+        }
+    });
+    socket.on('updateTiles', function({}){
+        if (roomstructlist[(Math.floor(players.length/2))].tilerects[roomstructlist[(Math.floor(players.length/2))].rantile].width <= 0) {
+            roomstructlist[(Math.floor(players.length/2))].rantile = Math.floor(Math.random()*25);
+        } else if (roomstructlist[(Math.floor(players.length/2))].rantile != -1) {
+            if (roomstructlist[(Math.floor(players.length/2))].tilerects[roomstructlist[(Math.floor(players.length/2))].rantile].width > 0) {
+                var changefactor = roomstructlist[(Math.floor(players.length/2))].time;
+                roomstructlist[(Math.floor(players.length/2))].tilerects[roomstructlist[(Math.floor(players.length/2))].rantile].width -= (changefactor);
+                roomstructlist[(Math.floor(players.length/2))].tilerects[roomstructlist[(Math.floor(players.length/2))].rantile].height -= (changefactor);
+                roomstructlist[(Math.floor(players.length/2))].tilerects[roomstructlist[(Math.floor(players.length/2))].rantile].x += changefactor / 2;
+                roomstructlist[(Math.floor(players.length/2))].tilerects[roomstructlist[(Math.floor(players.length/2))].rantile].y += changefactor / 2;
+                io.to(temproom).emit('setTiles', {
+                    jstilerects:roomstructlist[(Math.floor(players.length/2))].tilerects
                 });
             }
         }

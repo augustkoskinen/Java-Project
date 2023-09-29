@@ -454,6 +454,12 @@ public class GameScreenMulti implements Screen {
 				socket.emit("playermove", data);
 			}
 		},(long)100,(long)1000);
+		new Timer().scheduleAtFixedRate(new TimerTask(){
+			@Override
+			public void run(){
+				socket.emit("updateTiles");
+			}
+		},(long)100,(long)1000);
 
 		// cam
 		float camdis = MovementMath.pointDis(cam.position, new Vector3(player.x+player.radius,player.y+player.radius, 0));
