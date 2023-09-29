@@ -122,6 +122,14 @@ io.on("connection", (socket)=>{
         }
     });
     socket.on('updateserverpoints', function({id,ran,rantile}){
+        for(var i  = 0; i <25;i++){
+            roomstructlist[(Math.floor(players.length/2))].tilerects[i] = {
+                width:196,
+                height:196,
+                x:(((i % 5) * 196) + 64),
+                y:(Math.floor(i / 5) * 196 + 64),
+            }
+        }
         io.to(temproom).emit('updatePoints', {
             id: id,
             ran: ran,

@@ -109,7 +109,7 @@ public class GameScreenMulti implements Screen {
 
 	public void connectSocket() {
 		try {
-			socket = IO.socket("http://localhost:8080");
+			socket = IO.socket("https://game.ejenda.org");
 			socket.connect();
 		} catch (Exception e) {
 			socket.disconnect();
