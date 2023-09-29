@@ -6,7 +6,6 @@ let server = http.Server(app);
 import { Server } from 'socket.io';
 var io = new Server(server);
 var players = [];
-var temproom = "room0";
 var roomstructlist = []
 
 server.listen(8080, function(){
@@ -14,6 +13,7 @@ server.listen(8080, function(){
 });
 
 io.on("connection", (socket)=>{
+    var temproom = "room" + Math.floor(players.length / 2);
     socket.join(temproom);
 
     console.log("Player Connected!");
@@ -21,14 +21,12 @@ io.on("connection", (socket)=>{
     io.to(temproom).emit('socketID', { id: socket.id });
 
     players.push(new player(socket.id, 0, 0, 0));
-    roomstructlist.push(new roomstruct());
 
     if(players.length %2 ==0){
+        roomstructlist.push(new roomstruct());
         io.to(temproom).emit("getPlayers", players);
         io.to(temproom).emit('startGame', {seed: Math.floor(Math.random() * 10000)});
-    } else if(players.length %2 !=0){
-        temproom = "room"+((Math.floor(players.length/2)))
-    }
+    } 
 
     for(var i  = 0; i <25;i++){
         roomstructlist[(Math.floor(players.length/2))].tilerects[i] = {

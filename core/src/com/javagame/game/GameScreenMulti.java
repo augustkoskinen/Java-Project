@@ -453,7 +453,7 @@ public class GameScreenMulti implements Screen {
 				data.put("mytime", Gdx.graphics.getDeltaTime());
 				socket.emit("playermove", data);
 			}
-		},(long)100,(long)1000);
+		},(long)100,(long)100);
 
 		// cam
 		float camdis = MovementMath.pointDis(cam.position, new Vector3(player.x+player.radius,player.y+player.radius, 0));
