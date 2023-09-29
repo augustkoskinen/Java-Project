@@ -7,6 +7,17 @@ import { Server } from 'socket.io';
 var io = new Server(server);
 var players = [];
 var temproom = "room0";
+var time = 0;
+var tilerects = [25]
+var rantile = Math.floor(Math.random()*25)
+for(var i  = 0; i <25;i++){
+    tilerects[i] = {
+        width:196,
+        height:196,
+        x:(((i % 5) * 196) + 64),
+        y:(Math.floor(i / 5) * 196 + 64),
+    }
+}
 
 server.listen(8080, function(){
     console.log("Server is now running...");
@@ -39,7 +50,8 @@ io.on("connection", (socket)=>{
             }
         }
     });
-    socket.on('playermove', function({x, y,rotation,xadd2,yadd2,moveVectx,moveVecty,kbaddx,kbaddy,dashvelx,dashvely,spawnprot}){
+    socket.on('playermove', function({x, y,rotation,xadd2,yadd2,moveVectx,moveVecty,kbaddx,kbaddy,dashvelx,dashvely,spawnprot,ballsize,mytime}){
+        time = 0;
         for(var i = 0; i < players.length; i++){
             if(players[i].id == socket.id){
                 players[i].x = x;
@@ -54,6 +66,8 @@ io.on("connection", (socket)=>{
                 players[i].dashvelx = dashvelx;
                 players[i].dashvely = dashvely;
                 players[i].spawnprot = spawnprot;
+                players[i].ballsize = ballsize;
+                players[i].mytime = mytime;
 
                 io.to(temproom).emit('movement', {
                     id:players[i].id,
@@ -68,9 +82,31 @@ io.on("connection", (socket)=>{
                     kbaddx:players[i].kbaddx,
                     kbaddy:players[i].kbaddy,
                     dashvelx:players[i].dashvelx,
-                    dashvely:players[i].dashvely
+                    dashvely:players[i].dashvely,
+                    ballsize:players[i].ballsize,
                 });
             }
+            time+=players[i].mytime;
+        }
+        time/=players.length;
+        if (tilerects[rantile].width <= 0) {
+            rantile = Math.floor(Math.random()*25);
+        } else if (rantile != -1) {
+            if (tilerects[rantile].width > 0) {
+                var changefactor = time * 10;
+                tilerects[rantile].width -= (changefactor);
+                tilerects[rantile].height -= (changefactor);
+                tilerects[rantile].x += changefactor / 2;
+                tilerects[rantile].y += changefactor / 2;
+                io.to(temproom).emit('setTiles', {
+                    jstilerects:tilerects
+                });
+            }
+        }
+        if (Math.floor(Math.random() *(1500 * (1 + time))) == 0){
+            io.to(temproom).emit('makePower', {
+                randpos:Math.random()*3
+            });
         }
     });
     socket.on('shootmyball', function({ballcount,ballsize,color}){
@@ -108,4 +144,6 @@ function player(id, x, y,rot){
     this.dashvelx = 0;
     this.dashvely = 0;
     this.spawnprot = 0;
+    this.ballsize = -1;
+    this.mytime = 0;
 }

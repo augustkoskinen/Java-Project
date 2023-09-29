@@ -43,7 +43,6 @@ public class GameScreenMulti implements Screen {
 	private Socket socket;
 	private boolean start = false;
 	private String mycolor = "red";
-	private String othercolor = "red";
 	private boolean createdplayers = false;
 	
 	static final int WORLD_WIDTH = 1108;
@@ -151,12 +150,10 @@ public class GameScreenMulti implements Screen {
 					if(myid.equals(id1)){
 						otherid = id2;
 						mycolor = "red";
-						othercolor = "blue";
 					}
 					else if(myid.equals(id2)){
 						otherid = id1;
 						mycolor = "blue";
-						othercolor = "red";
 					}
 				} catch (JSONException e) {
 
@@ -211,6 +208,7 @@ public class GameScreenMulti implements Screen {
 						dashvel2x = objects.getFloat("dashvelx");
 						dashvel2y = objects.getFloat("dashvely");
 						spawnprot2 = objects.getFloat("spawnprot");
+						ballsize2 = objects.getFloat("ballsize");
 					}
 				} catch (JSONException e) {
 
@@ -234,7 +232,6 @@ public class GameScreenMulti implements Screen {
 							Ball ball = new Ball();
 							ball.rotation = playerrot2;
 							ball.changeColor(objects.getString("color"));
-							System.out.println(ball.ballsprite);
 							Vector3 ballpos = MovementMath.lengthDir(playerrot2+0.349066f*mult, 40f);
 							Vector3 ballvel = MovementMath.lengthDir(playerrot2+0.349066f*mult, ballsize * 80 + 50f);
 							ball.circ.setPosition(player2.x + ballpos.x + 28, player2.y + ballpos.y + 28);
@@ -261,6 +258,51 @@ public class GameScreenMulti implements Screen {
 					}
 					ran = objects.getInt("ran");
 					rantile = objects.getInt("rantile");
+				} catch (JSONException e) {
+
+				}
+			}
+		}).on("setTiles", new Emitter.Listener() {
+			@Override
+			public void call(Object... args) {
+				JSONObject objects = (JSONObject) args[0];
+				try {
+					for(int i = 0; i < 25; i++){
+						tilerects[i].width =objects.getJSONArray("jstilerects").getJSONObject(i).getFloat("width");
+						tilerects[i].height =objects.getJSONArray("jstilerects").getJSONObject(i).getFloat("height");
+						tilerects[i].setPosition(objects.getJSONArray("jstilerects").getJSONObject(i).getFloat("x"),objects.getJSONArray("jstilerects").getJSONObject(i).getFloat("y"));
+					}
+				} catch (JSONException e) {
+
+				}
+			}
+		}).on("makePower", new Emitter.Listener() {
+			@Override
+			public void call(Object... args) {
+				JSONObject objects = (JSONObject) args[0];
+				try {
+					Power power = new Power();
+					power.type = (int) Math.random() % 5;
+					switch (objects.getInt("randpos")) {
+						case 0: {
+							power.assignCircleValues(24, new Vector3(spawn1.x - 32, spawn1.y - 32, 0));
+							break;
+						}
+						case 1: {
+							power.assignCircleValues(24, new Vector3(spawn2.x - 32, spawn2.y - 32, 0));
+							break;
+						}
+						case 2: {
+							power.assignCircleValues(24, new Vector3(spawn3.x - 32, spawn3.y - 32, 0));
+							break;
+						}
+						case 3: {
+							power.assignCircleValues(24, new Vector3(spawn4.x - 32, spawn4.y - 32, 0));
+							break;
+						}
+					}
+					power.asignType(0);
+					poweruparray.add(power);
 				} catch (JSONException e) {
 
 				}
@@ -399,6 +441,11 @@ public class GameScreenMulti implements Screen {
 		data.put("dashvelx", dashvel.x);
 		data.put("dashvely", dashvel.y);
 		data.put("spawnprot", spawnprot);
+		if(canreleaseball)
+			data.put("ballsize", ballsize);
+		else
+			data.put("ballsize", -1f);
+		data.put("mytime", Gdx.graphics.getDeltaTime());
 		socket.emit("playermove", data);
 
 		// cam
@@ -444,42 +491,6 @@ public class GameScreenMulti implements Screen {
 			handleInput();
 
 			cam.update();
-
-			if (tilerects[rantile].width <= 0) {
-				rantile = random.nextInt(25);
-			} else if (rantile != -1) {
-				if (tilerects[rantile].width > 0) {
-					float changefactor = (float) Gdx.graphics.getDeltaTime() * 10;
-					tilerects[rantile].width -= (changefactor);
-					tilerects[rantile].height -= (changefactor);
-					tilerects[rantile].x += changefactor / 2;
-					tilerects[rantile].y += changefactor / 2;
-				}
-			}
-			if (random.nextInt(1500 * (int) (1 + Math.abs(Gdx.graphics.getDeltaTime()))) == 0) {
-				Power power = new Power();
-				power.type = (int) Math.random() % 5;
-				switch (ran) {
-					case 0: {
-						power.assignCircleValues(24, new Vector3(spawn1.x - 32, spawn1.y - 32, 0));
-						break;
-					}
-					case 1: {
-						power.assignCircleValues(24, new Vector3(spawn2.x - 32, spawn2.y - 32, 0));
-						break;
-					}
-					case 2: {
-						power.assignCircleValues(24, new Vector3(spawn3.x - 32, spawn3.y - 32, 0));
-						break;
-					}
-					case 3: {
-						power.assignCircleValues(24, new Vector3(spawn4.x - 32, spawn4.y - 32, 0));
-						break;
-					}
-				}
-				power.asignType(0);
-				poweruparray.add(power);
-			}
 			if (playerpowercooldown != -1) {
 				playerpowercooldown -= Gdx.graphics.getDeltaTime() * 10;
 				if (playerpowercooldown <= -1) {
@@ -586,6 +597,8 @@ public class GameScreenMulti implements Screen {
 				player2.setPosition(WORLD_WIDTH / 2 - 32, WORLD_HEIGHT / 2 - 32);
 				JSONObject data = new JSONObject();
 				data.put("id",myid);
+				data.put("ran",random.nextInt(4));
+				data.put("rantile",random.nextInt(25));
 				socket.emit("updatePoints",(data));
 			}
 			if (spawnprot <= 0)
@@ -618,6 +631,13 @@ public class GameScreenMulti implements Screen {
 				else
 					batch.draw(balltext2, player.x + ballpos.x + playerSprite.getWidth() / 2 - ballsize / 2,player.y + ballpos.y + playerSprite.getHeight() / 2 - ballsize / 2, ballsize, ballsize);
 			}
+			if (ballsize2!=-1){
+				Vector3 ballpos = MovementMath.lengthDir(playerrot2, 40f);
+				if(mycolor.equals("red"))
+					batch.draw(balltext2, player2.x + ballpos.x + playerSprite2.getWidth() / 2 - ballsize2 / 2,player2.y + ballpos.y + playerSprite2.getHeight() / 2 - ballsize2 / 2, ballsize2, ballsize2);
+				else
+					batch.draw(balltext, player2.x + ballpos.x + playerSprite2.getWidth() / 2 - ballsize2 / 2,player2.y + ballpos.y + playerSprite2.getHeight() / 2 - ballsize2 / 2, ballsize2, ballsize2);
+			}
 			if (playerpowercooldown != -1)
 				game.font.draw(batch, (1 + (int) playerpowercooldown / 4) + "", player.x + 16,player.y + player.radius * 2 + 24);
 			if (dashcooldown > 0)
@@ -625,8 +645,8 @@ public class GameScreenMulti implements Screen {
 			batch.end();
 
 			game.batch.begin();
-			game.font.draw(game.batch, "Player1 Points: " + points, 10, 470);
-			game.font.draw(game.batch, "Player2 Points: " + points2, 470, 470);
+			game.font.draw(game.batch, "Points: " + points, 10, 470);
+			game.font.draw(game.batch, "Opponent Points: " + points2, 440, 470);
 			game.batch.end();
 		}
 	}
