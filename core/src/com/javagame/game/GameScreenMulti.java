@@ -680,8 +680,12 @@ public class GameScreenMulti implements Screen {
 		tiletexture.dispose();
 		balltext.dispose();
 		balltext2.dispose();
-		
-		//disconnectSocket();
+		socket.disconnect();
+		try{
+			socket.disconnect();
+		} catch (Exception e) {
+
+		}
 	}
 
 	public void drawHitbox(Texture hitbox, Circle circle, SpriteBatch batch) {
