@@ -111,7 +111,7 @@ public class GameScreenMulti implements Screen {
 
 	public void connectSocket() {
 		try {
-			socket = IO.socket("wss://game2.ejenda.org");//http://localhost:8080
+			socket = IO.socket("wss://game2.ejenda.org");//wss://game2.ejenda.org http://localhost:8080
 			socket.connect();
 		} catch (Exception e) {
 			socket.disconnect();
@@ -457,6 +457,7 @@ public class GameScreenMulti implements Screen {
 				else
 					data.put("ballsize", -1f);
 				data.put("mytime", Gdx.graphics.getDeltaTime());
+				data.put("room", game.myroom);
 				socket.emit("playermove", data);
 			}
 		},(long)100,(long)1000);

@@ -46,7 +46,7 @@ io.on("connection", (socket)=>{
         console.log("Player Disconnected");
         for(var i = 0; i < players.length; i++){
             if(players[i].id == socket.id){
-                var roomlocation = 0//locateRoom(rooms,players[i].myroom)
+                var roomlocation = locateRoom(rooms,players[i].myroom)
                 io.to(rooms[roomlocation].room).emit('playerDisconnected', { id: socket.id});
                 rooms[roomlocation].num--;
                 if(rooms[roomlocation].num<=0){
@@ -58,7 +58,7 @@ io.on("connection", (socket)=>{
         }
     });
     socket.on('playermove', function({x, y,rotation,xadd2,yadd2,moveVectx,moveVecty,kbaddx,kbaddy,dashvelx,dashvely,spawnprot,ballsize,mytime,room}){
-        var roomloc = 0//locateRoom(rooms,room);
+        var roomloc = locateRoom(rooms,room);
         rooms[roomloc].time = 0;
         for(var i = 0; i < players.length; i++){
             if(players[i].id == socket.id){
@@ -116,7 +116,7 @@ io.on("connection", (socket)=>{
         }
     });
     socket.on('updateTiles', function({room}){
-        var roomloc = 0//locateRoom(rooms,room);
+        var roomloc = locateRoom(rooms,room);
         if (rooms[roomloc].tilerects[rooms[roomloc].rantile].width <= 0) {
             rooms[roomloc].rantile = Math.floor(Math.random()*25);
         } else if (rooms[roomloc].rantile != -1) {
