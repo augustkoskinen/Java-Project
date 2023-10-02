@@ -111,7 +111,7 @@ public class GameScreenMulti implements Screen {
 
 	public void connectSocket() {
 		try {
-			socket = IO.socket("wss://game2.ejenda.org");
+			socket = IO.socket("wss://game2.ejenda.org");//http://localhost:8080
 			socket.connect();
 		} catch (Exception e) {
 			socket.disconnect();
@@ -126,7 +126,6 @@ public class GameScreenMulti implements Screen {
 			@Override
 			public void call(Object... args) {
 				Gdx.app.log("SocketIO", "Connected");
-				// player = new Starship(playerShip);
 			}
 		}).on("socketID", new Emitter.Listener() {
 			@Override
@@ -135,8 +134,10 @@ public class GameScreenMulti implements Screen {
 				try {
 					if(myid==""){
 						id = data.getString("id");
-						Gdx.app.log("SocketIO", "My ID: " + id);
 						myid = id;
+						String roomid = data.getString("room");
+						game.myroom = roomid;
+						Gdx.app.log("SocketIO", "My ID: " + id);
 					}
 				} catch (JSONException e) {
 					Gdx.app.log("SocketIO", "Error getting ID");
@@ -147,15 +148,20 @@ public class GameScreenMulti implements Screen {
 			public void call(Object... args) {
 				JSONArray data = (JSONArray) args[0];
 				try {
-					String id1 = data.getJSONObject(data.length()-2).getString("id");
-					String id2 = data.getJSONObject(data.length()-1).getString("id");
-					if(myid.equals(id1)){
-						otherid = id2;
+					int playeri =getPlayerByID(data,myid);
+					if(playeri==0){
+						otherid = data.getJSONObject(playeri+1).getString("id");
 						mycolor = "red";
-					}
-					else if(myid.equals(id2)){
-						otherid = id1;
+					} else if (playeri==data.length()-1){
+						otherid = data.getJSONObject(playeri-1).getString("id");
 						mycolor = "blue";
+					}
+					if(data.getJSONObject(playeri-1).getString("myroom")==game.myroom) {
+						otherid = data.getJSONObject(playeri-1).getString("id");
+						mycolor = "blue";
+					}else if(data.getJSONObject(playeri+1).getString("myroom")==game.myroom){
+						otherid = data.getJSONObject(playeri+1).getString("id");
+						mycolor = "red";
 					}
 				} catch (JSONException e) {
 
@@ -170,9 +176,7 @@ public class GameScreenMulti implements Screen {
 					if(myid==id){
 						socket.disconnect();
 					}
-					// friendlyPlayers.remove(id);
 					System.out.println("Player Disconnected: " + id);
-					//disconnectSocket();
 				} catch (JSONException e) {
 					Gdx.app.log("SocketIO", "Error getting disconnected PlayerID");
 				}
@@ -313,9 +317,10 @@ public class GameScreenMulti implements Screen {
 	}
 
 	public GameScreenMulti(final JavaGame game) {
+		this.game = game;
 		connectSocket();
 		configSocketEvents();
-		this.game = game;
+		//System.out.println(this.game.myroom);
 		for (int i = 0; i < tilecol.length; i++) {
 			tilerects[i] = new Rectangle();
 			tilerects[i].setWidth(196);
@@ -396,6 +401,7 @@ public class GameScreenMulti implements Screen {
 			data.put("ballcount", ballamount);
 			data.put("ballsize", ballsize);
 			data.put("color", mycolor);
+			data.put("room", game.myroom);
 			socket.emit("shootmyball", data);
 
 			canreleaseball = false;
@@ -457,7 +463,9 @@ public class GameScreenMulti implements Screen {
 		new Timer().scheduleAtFixedRate(new TimerTask(){
 			@Override
 			public void run(){
-				socket.emit("updateTiles");
+				JSONObject data = new JSONObject();
+				data.put("room",game.myroom);
+				socket.emit("updateTiles",data);
 			}
 		},(long)100,(long)1000);
 
@@ -590,6 +598,7 @@ public class GameScreenMulti implements Screen {
 				data.put("id",otherid);
 				data.put("ran",random.nextInt(4));
 				data.put("rantile",random.nextInt(25));
+				data.put("room",game.myroom);
 				socket.emit("updateserverpoints",(data));
 			}
 			if (!searchBoolArray(tilecol2, true)) {
@@ -762,4 +771,13 @@ public class GameScreenMulti implements Screen {
 			return 0f;
 		}
 	}
+	public int getPlayerByID(JSONArray players, String id) {
+		for(int i =0; i<players.length();i++){
+			if(players.getJSONObject(i).getString("id").equals(id)){
+				return i;
+			}
+		}
+		return -1;
+	}
+	
 }

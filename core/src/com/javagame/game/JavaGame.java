@@ -12,6 +12,7 @@ public class JavaGame extends Game {
 	public BitmapFont font;
 	FreeTypeFontGenerator generator;
 	FreeTypeFontParameter parameter;
+	public String myroom;
 
 	public void create() {
 		batch = new SpriteBatch();

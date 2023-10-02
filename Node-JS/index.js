@@ -6,32 +6,35 @@ let server = http.Server(app);
 import { Server } from 'socket.io';
 var io = new Server(server);
 var players = [];
-var temproom = "room0";
-var roomstructlist = []
+var rooms = []
+var curroom = ""
 
 server.listen(8080, function(){
     console.log("Server is now running...");
 });
 
 io.on("connection", (socket)=>{
-    socket.join(temproom);
-
-    console.log("Player Connected!");
-
-    io.to(temproom).emit('socketID', { id: socket.id });
-
-    players.push(new player(socket.id, 0, 0, 0));
-    roomstructlist.push(new roomstruct());
-
-    if(players.length %2 ==0){
-        io.to(temproom).emit("getPlayers", players);
-        io.to(temproom).emit('startGame', {seed: Math.floor(Math.random() * 10000)});
-    } else if(players.length %2 !=0){
-        temproom = "room"+((Math.floor(players.length/2)))
+    var openroom = checkRoomsFor(rooms,1);
+    if(openroom==-1){
+        curroom = "rm"+(rooms.length)
+        rooms.push(new roomstruct(curroom))
+        players.push(new player(socket.id, 0, 0, 0, curroom));
+        openroom = rooms.length-1
+        socket.join(curroom);
+        io.to(rooms[openroom].room).emit('socketID', { id: socket.id,room: curroom});
+        rooms[openroom].num++;
+    } else {
+        curroom = "rm"+(rooms.length-1)
+        socket.join(curroom);
+        players.push(new player(socket.id, 0, 0, 0, curroom));
+        io.to(curroom).emit('socketID', { id: socket.id,room: curroom});
+        rooms[openroom].num++;
+        io.to(curroom).emit("getPlayers", players);
+        io.to(curroom).emit('startGame', {seed: Math.floor(Math.random() * 10000)});
     }
-
+    console.log("Player Connected!");
     for(var i  = 0; i <25;i++){
-        roomstructlist[(Math.floor(players.length/2))].tilerects[i] = {
+        rooms[openroom].tilerects[i] = {
             width:196,
             height:196,
             x:(((i % 5) * 196) + 64),
@@ -42,16 +45,21 @@ io.on("connection", (socket)=>{
     socket.on("disconnect", ()=>{
         console.log("Player Disconnected");
         for(var i = 0; i < players.length; i++){
-            io.to(temproom).emit('playerDisconnected', { id: socket.id});
             if(players[i].id == socket.id){
+                var roomlocation = 0//locateRoom(rooms,players[i].myroom)
+                io.to(rooms[roomlocation].room).emit('playerDisconnected', { id: socket.id});
+                rooms[roomlocation].num--;
+                if(rooms[roomlocation].num<=0){
+                    rooms.splice(roomlocation, 1);
+                }
                 players.splice(i, 1);
-                roomstructlist.splice((Math.floor(players.length/2)), 1);
                 socket.leave();
             }
         }
     });
-    socket.on('playermove', function({x, y,rotation,xadd2,yadd2,moveVectx,moveVecty,kbaddx,kbaddy,dashvelx,dashvely,spawnprot,ballsize,mytime}){
-        roomstructlist[(Math.floor(players.length/2))].time = 0;
+    socket.on('playermove', function({x, y,rotation,xadd2,yadd2,moveVectx,moveVecty,kbaddx,kbaddy,dashvelx,dashvely,spawnprot,ballsize,mytime,room}){
+        var roomloc = 0//locateRoom(rooms,room);
+        rooms[roomloc].time = 0;
         for(var i = 0; i < players.length; i++){
             if(players[i].id == socket.id){
                 players[i].x = x;
@@ -69,7 +77,7 @@ io.on("connection", (socket)=>{
                 players[i].ballsize = ballsize;
                 players[i].mytime = mytime;
 
-                io.to(temproom).emit('movement', {
+                io.to(rooms[roomloc].room).emit('movement', {
                     id:players[i].id,
                     x:players[i].x,
                     y:players[i].y,
@@ -86,19 +94,19 @@ io.on("connection", (socket)=>{
                     ballsize:players[i].ballsize,
                 });
             }
-            roomstructlist[(Math.floor(players.length/2))].time+=players[i].mytime;
+            rooms[roomloc].time+=players[i].mytime;
         }
-        roomstructlist[(Math.floor(players.length/2))].time/=players.length;
-        if (Math.floor(Math.random() *(1500 * (1 + roomstructlist[(Math.floor(players.length/2))].time))) == 0){
-            io.to(temproom).emit('makePower', {
+        rooms[roomloc].time/=players.length;
+        if (Math.floor(Math.random() *(1500 * (1 + rooms[roomloc]))) == 0){
+            io.to(rooms[roomloc].room).emit('makePower', {
                 randpos:Math.random()*3
             });
         }
     });
-    socket.on('shootmyball', function({ballcount,ballsize,color}){
+    socket.on('shootmyball', function({ballcount,ballsize,color,room}){
         for(var i = 0; i < players.length; i++){
             if(players[i].id == socket.id){
-                io.to(temproom).emit('shootBullet', {
+                io.to(room).emit('shootBullet', {
                     id: socket.id,
                     ballcount:ballcount,
                     ballsize:ballsize,
@@ -107,32 +115,34 @@ io.on("connection", (socket)=>{
             }
         }
     });
-    socket.on('updateTiles', function({}){
-        if (roomstructlist[(Math.floor(players.length/2))].tilerects[roomstructlist[(Math.floor(players.length/2))].rantile].width <= 0) {
-            roomstructlist[(Math.floor(players.length/2))].rantile = Math.floor(Math.random()*25);
-        } else if (roomstructlist[(Math.floor(players.length/2))].rantile != -1) {
-            if (roomstructlist[(Math.floor(players.length/2))].tilerects[roomstructlist[(Math.floor(players.length/2))].rantile].width > 0) {
-                var changefactor = roomstructlist[(Math.floor(players.length/2))].time;
-                roomstructlist[(Math.floor(players.length/2))].tilerects[roomstructlist[(Math.floor(players.length/2))].rantile].width -= (changefactor);
-                roomstructlist[(Math.floor(players.length/2))].tilerects[roomstructlist[(Math.floor(players.length/2))].rantile].height -= (changefactor);
-                roomstructlist[(Math.floor(players.length/2))].tilerects[roomstructlist[(Math.floor(players.length/2))].rantile].x += changefactor / 2;
-                roomstructlist[(Math.floor(players.length/2))].tilerects[roomstructlist[(Math.floor(players.length/2))].rantile].y += changefactor / 2;
-                io.to(temproom).emit('setTiles', {
-                    jstilerects:roomstructlist[(Math.floor(players.length/2))].tilerects
+    socket.on('updateTiles', function({room}){
+        var roomloc = 0//locateRoom(rooms,room);
+        if (rooms[roomloc].tilerects[rooms[roomloc].rantile].width <= 0) {
+            rooms[roomloc].rantile = Math.floor(Math.random()*25);
+        } else if (rooms[roomloc].rantile != -1) {
+            if (rooms[roomloc].tilerects[rooms[roomloc].rantile].width > 0) {
+                var changefactor = rooms[roomloc].time;
+                rooms[roomloc].tilerects[rooms[roomloc].rantile].width -= (changefactor);
+                rooms[roomloc].tilerects[rooms[roomloc].rantile].height -= (changefactor);
+                rooms[roomloc].tilerects[rooms[roomloc].rantile].x += changefactor / 2;
+                rooms[roomloc].tilerects[rooms[roomloc].rantile].y += changefactor / 2;
+                io.to(rooms[roomloc].room).emit('setTiles', {
+                    jstilerects:rooms[roomloc].tilerects
                 });
             }
         }
     });
-    socket.on('updateserverpoints', function({id,ran,rantile}){
+    socket.on('updateserverpoints', function({id,ran,rantile,room}){
+        var roomloc = locateRoom(rooms,room);
         for(var i  = 0; i <25;i++){
-            roomstructlist[(Math.floor(players.length/2))].tilerects[i] = {
+            rooms[roomloc].tilerects[i] = {
                 width:196,
                 height:196,
                 x:(((i % 5) * 196) + 64),
                 y:(Math.floor(i / 5) * 196 + 64),
             }
         }
-        io.to(temproom).emit('updatePoints', {
+        io.to(rooms[roomloc].room).emit('updatePoints', {
             id: id,
             ran: ran,
             rantile: rantile
@@ -140,7 +150,7 @@ io.on("connection", (socket)=>{
     });
 });
 
-function player(id, x, y,rot){
+function player(id, x, y,rot,room){
     this.id = id;
     this.x = x;
     this.y = y;
@@ -156,10 +166,39 @@ function player(id, x, y,rot){
     this.spawnprot = 0;
     this.ballsize = -1;
     this.mytime = 0;
+    this.myroom = room;
 }
 
-function roomstruct(){
+function roomstruct(room){
     this.time = 0;
     this.tilerects = [25];
     this.rantile = Math.floor(Math.random()*25);
+    this.room = room;
+    this.num=0
+}
+
+function checkRoomsFor(rooms,playernumber){
+    for(var i = 0; i < rooms.length;i++){
+        if(rooms[i].num==playernumber){
+            return i;
+        }
+    }
+    return -1;
+}
+function locateRoom(rooms,name){
+    for(var i = 0; i < rooms.length;i++){
+        if(rooms[i].room==name){
+            return i;
+        }
+    }
+    return -1;
+}
+
+function locatePlayerByID(players,id){
+    for(var i = 0; i < players.length;i++){
+        if(players[i].id==id){
+            return i;
+        }
+    }
+    return -1;
 }
