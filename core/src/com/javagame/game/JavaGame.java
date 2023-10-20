@@ -16,7 +16,7 @@ public class JavaGame extends Game {
 
 	public void create() {
 		batch = new SpriteBatch();
-		generator = new FreeTypeFontGenerator(Gdx.files.internal("minecraft.ttf"));
+		generator = new FreeTypeFontGenerator(Gdx.files.internal("Minecraft.ttf"));
 		parameter = new FreeTypeFontParameter();
 		parameter.size = 30;
 		font = generator.generateFont(parameter);
