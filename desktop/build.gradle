@@ -7,9 +7,7 @@ project.ext.assetsDir = new File("../assets")
 
 import org.gradle.internal.os.OperatingSystem
 
-def osName = System.getProperty('os.name').toLowerCase(Locale.ROOT)
-
-tasks.register('runGame', JavaExec) {
+tasks.register('run', JavaExec) {
     dependsOn classes
     mainClass = project.mainClassName
     classpath = sourceSets.main.runtimeClasspath
