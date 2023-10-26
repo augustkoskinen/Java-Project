@@ -1,16 +1,15 @@
-package com.javagame.game;
+package com.dodgeball.game;
 
 import java.util.Iterator;
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
+//import java.util.Timer;
+//import java.util.TimerTask;
+//import java.util.Timer;
+//import java.util.TimerTask;
+import java.io.*;
+import java.net.*;
 
-import io.socket.client.IO;
-import io.socket.client.Socket;
-import io.socket.emitter.Emitter;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.github.czyzby.websocket.*;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -42,7 +41,7 @@ import com.badlogic.gdx.Input.Keys;
 */
 
 public class GameScreenMulti implements Screen {
-	private Socket socket;
+	private WebSocket socket = WebSockets.newSocket(WebSockets.toWebSocketUrl("127.0.0.1", 9876));
 	private boolean start = false;
 	private String mycolor = "red";
 	private boolean createdplayers = false;
@@ -64,7 +63,7 @@ public class GameScreenMulti implements Screen {
 	private boolean tilecol2[] = new boolean[25];
 	private OrthographicCamera cam;
 	private SpriteBatch batch;
-	final JavaGame game;
+	final DodgeballGame game;
 	private Texture tiletexture;
 	private Array<Power> poweruparray = new Array<Power>();
 
@@ -109,6 +108,44 @@ public class GameScreenMulti implements Screen {
 	private Vector3 spawn3 = new Vector3(WORLD_WIDTH - 162, WORLD_HEIGHT / 2, 0);
 	private Vector3 spawn4 = new Vector3(WORLD_WIDTH / 2, WORLD_HEIGHT - 162, 0);
 
+	public void configSocket(){
+		System.out.println(socket);
+		socket.setSendGracefully(true);
+		socket.addListener(new WebSocketListener() {
+			@Override
+			public boolean onOpen(WebSocket webSocket) {
+				Gdx.app.log("Log","Open");
+				return false;
+			}
+
+			@Override
+			public boolean onClose(WebSocket webSocket, int closeCode, String reason) {
+				Gdx.app.log("Log","Close");
+				return false;
+			}
+
+			@Override
+			public boolean onMessage(WebSocket webSocket, String packet) {
+				Gdx.app.log("Log","Message");
+				return false;
+			}
+
+			@Override
+			public boolean onMessage(WebSocket webSocket, byte[] packet) {
+				Gdx.app.log("Log","Message");
+				return false;
+			}
+
+			@Override
+			public boolean onError(WebSocket webSocket, Throwable error) {
+				Gdx.app.log("Log","Error");
+				return false;
+			}
+		});
+
+		socket.connect();
+	}
+	/*
 	public void connectSocket() {
 		try {
 			socket = IO.socket("wss://game2.ejenda.org");//wss://game2.ejenda.org http://localhost:8080
@@ -315,11 +352,13 @@ public class GameScreenMulti implements Screen {
 			}
 		});
 	}
+	*/
 
-	public GameScreenMulti(final JavaGame game) {
+	public GameScreenMulti(final DodgeballGame game) {
 		this.game = game;
-		connectSocket();
-		configSocketEvents();
+		configSocket();
+		//connectSocket();
+		//configSocketEvents();
 		//System.out.println(this.game.myroom);
 		for (int i = 0; i < tilecol.length; i++) {
 			tilerects[i] = new Rectangle();
@@ -397,12 +436,14 @@ public class GameScreenMulti implements Screen {
 				myballs.add(ball);
 			}
 
+			/*
 			JSONObject data = new JSONObject();
 			data.put("ballcount", ballamount);
 			data.put("ballsize", ballsize);
 			data.put("color", mycolor);
 			data.put("room", game.myroom);
 			socket.emit("shootmyball", data);
+			*/
 
 			canreleaseball = false;
 			spawnprot = -1;
@@ -435,10 +476,12 @@ public class GameScreenMulti implements Screen {
 			}
 		}
 
+		/*
 		//socket movement
 		new Timer().scheduleAtFixedRate(new TimerTask(){
 			@Override
 			public void run(){
+				/*
 				JSONObject data = new JSONObject();
 				data.put("x", player.x);
 				data.put("y", player.y);
@@ -464,11 +507,13 @@ public class GameScreenMulti implements Screen {
 		new Timer().scheduleAtFixedRate(new TimerTask(){
 			@Override
 			public void run(){
+				/*
 				JSONObject data = new JSONObject();
 				data.put("room",game.myroom);
 				socket.emit("updateTiles",data);
 			}
 		},(long)100,(long)1000);
+		*/
 
 		// cam
 		float camdis = MovementMath.pointDis(cam.position, new Vector3(player.x+player.radius,player.y+player.radius, 0));
@@ -508,7 +553,7 @@ public class GameScreenMulti implements Screen {
 				cam = new OrthographicCamera();
 				cam.setToOrtho(false, 704, 448);
 				cam.position.set(player.x+player.radius,player.y+player.radius,0);
-				Gdx.app.log("SocketIO", "Other ID: " + otherid);
+				//Gdx.app.log("SocketIO", "Other ID: " + otherid);
 			}
 			handleInput();
 
@@ -595,12 +640,15 @@ public class GameScreenMulti implements Screen {
 				tilecol[0] = true;
 				tilecol2[0] = true;
 				player.setPosition(WORLD_WIDTH / 2 - 32, WORLD_HEIGHT / 2 - 32);
+				/*
 				JSONObject data = new JSONObject();
 				data.put("id",otherid);
 				data.put("ran",random.nextInt(4));
 				data.put("rantile",random.nextInt(25));
 				data.put("room",game.myroom);
 				socket.emit("updateserverpoints",(data));
+
+				 */
 			}
 			if (!searchBoolArray(tilecol2, true)) {
 				ballsize = 8;
@@ -618,11 +666,13 @@ public class GameScreenMulti implements Screen {
 				tilecol[0] = true;
 				tilecol2[0] = true;
 				player2.setPosition(WORLD_WIDTH / 2 - 32, WORLD_HEIGHT / 2 - 32);
+				/*
 				JSONObject data = new JSONObject();
 				data.put("id",myid);
 				data.put("ran",random.nextInt(4));
 				data.put("rantile",random.nextInt(25));
 				socket.emit("updatePoints",(data));
+				 */
 			}
 			if (spawnprot <= 0)
 				playerSprite.draw(batch, 1);
@@ -703,12 +753,7 @@ public class GameScreenMulti implements Screen {
 		tiletexture.dispose();
 		balltext.dispose();
 		balltext2.dispose();
-		socket.disconnect();
-		try{
-			socket.disconnect();
-		} catch (Exception e) {
-
-		}
+		//socket.disconnect();
 	}
 
 	public void drawHitbox(Texture hitbox, Circle circle, SpriteBatch batch) {
@@ -772,6 +817,7 @@ public class GameScreenMulti implements Screen {
 			return 0f;
 		}
 	}
+	/*
 	public int getPlayerByID(JSONArray players, String id) {
 		for(int i =0; i<players.length();i++){
 			if(players.getJSONObject(i).getString("id").equals(id)){
@@ -780,5 +826,6 @@ public class GameScreenMulti implements Screen {
 		}
 		return -1;
 	}
+	*/
 	
 }

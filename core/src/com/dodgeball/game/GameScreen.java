@@ -1,4 +1,4 @@
-package com.javagame.game;
+package com.dodgeball.game;
 
 import java.util.Iterator;
 import java.util.Random;
@@ -50,7 +50,7 @@ public class GameScreen implements Screen {
 	private boolean tilecol2[] = new boolean[25];
 	private OrthographicCamera cam;
 	private SpriteBatch batch;
-	final JavaGame game;
+	final DodgeballGame game;
 	private Texture tiletexture;
 	private Array<Power> poweruparray = new Array<Power>();
 	// private Texture debughitbox= new Texture("debughitbox.png");
@@ -94,7 +94,7 @@ public class GameScreen implements Screen {
 	private Vector3 spawn3 = new Vector3(WORLD_WIDTH - 162, WORLD_HEIGHT / 2, 0);
 	private Vector3 spawn4 = new Vector3(WORLD_WIDTH / 2, WORLD_HEIGHT - 162, 0);
 
-	public GameScreen(final JavaGame game) {
+	public GameScreen(final DodgeballGame game) {
 		this.game = game;
 		for (int i = 0; i < tilecol.length; i++) {
 			tilerects[i] = new Rectangle();

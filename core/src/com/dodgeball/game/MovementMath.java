@@ -1,4 +1,4 @@
-package com.javagame.game;
+package com.dodgeball.game;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;

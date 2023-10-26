@@ -1,9 +1,10 @@
-package com.javagame.game.client;
+package com.dodgeball.game.client;
 
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.backends.gwt.GwtApplication;
 import com.badlogic.gdx.backends.gwt.GwtApplicationConfiguration;
-import com.javagame.game.JavaGame;
+import com.dodgeball.game.DodgeballGame;
+import com.github.czyzby.websocket.GwtWebSockets;
 
 public class HtmlLauncher extends GwtApplication {
 
@@ -17,6 +18,7 @@ public class HtmlLauncher extends GwtApplication {
 
         @Override
         public ApplicationListener createApplicationListener () {
-                return new JavaGame();
+                GwtWebSockets.initiate();
+                return new DodgeballGame();
         }
 }
