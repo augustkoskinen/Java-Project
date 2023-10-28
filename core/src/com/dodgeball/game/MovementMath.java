@@ -15,7 +15,7 @@ public class MovementMath {
         return (float) Math.sin(f);
     }
 
-    //advanced trig
+    //simple trig
     static public Vector3 lengthDir(float direction, float length){
         return new Vector3(MovementMath.cosf(direction)*length,MovementMath.sinf(direction)*length,0);
     }
@@ -105,7 +105,6 @@ public class MovementMath {
             curpoint.x+=velocity.x;
             curpoint.y+=velocity.y;
         }
-
 
         return false;
     }

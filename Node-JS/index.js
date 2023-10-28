@@ -1,4 +1,23 @@
+import { WebSocketServer } from 'ws';
+import WebSocket from 'ws';
+
+//const wss = new WebSocketServer({ port: 8080 });
+const wss = new WebSocket('ws://localhost:8080', {
+    perMessageDeflate: false
+});
+wss.on('connection', function connection(ws) {
+    ws.on('error', console.error);
+
+    ws.on('message', function message(data) {
+        console.log('received: %s', data);
+    });
+
+    ws.send('something');
+});
+
+/*
 import { randomInt } from 'crypto';
+
 import express from 'express'
 const app = express();
 import http from 'http';
@@ -202,3 +221,4 @@ function locatePlayerByID(players,id){
     }
     return -1;
 }
+*/

@@ -148,6 +148,7 @@ public class GameScreen implements Screen {
 			yadd = moveMag.y * SPEED * Gdx.graphics.getDeltaTime();
 		}
 		if (Gdx.input.isKeyJustPressed(Input.Keys.G) && dashcooldown <= 0 && (moveVect.x != 0 || moveVect.y != 0)) {
+			System.out.println(Gdx.graphics.getDeltaTime());
 			dashvel = new Vector3(moveMag.x * DASHSPEED, moveMag.y * DASHSPEED, 0);
 			dashcooldown = 20;
 		}
