@@ -39,7 +39,7 @@ import com.badlogic.gdx.Input.Keys;
 */
 
 public class GameScreenMulti implements Screen {
-	private WebSocket socket = WebSockets.newSocket(WebSockets.toWebSocketUrl("127.0.0.1", 9876));
+	private WebSocket socket;
 	private boolean start = false;
 	private String mycolor = "red";
 	private boolean createdplayers = false;
@@ -106,10 +106,10 @@ public class GameScreenMulti implements Screen {
 	private Vector3 spawn3 = new Vector3(WORLD_WIDTH - 162, WORLD_HEIGHT / 2, 0);
 	private Vector3 spawn4 = new Vector3(WORLD_WIDTH / 2, WORLD_HEIGHT - 162, 0);
 
-	public void configSocket(){
-		System.out.println(socket);
-		socket.setSendGracefully(true);
-		socket.addListener(new WebSocketListener() {
+	public WebSocket configSocket(){
+		WebSocket holdsocket = WebSockets.newSocket(WebSockets.toWebSocketUrl("127.0.0.1", 8080));
+		holdsocket.setSendGracefully(true);
+		holdsocket.addListener(new WebSocketListener() {
 			@Override
 			public boolean onOpen(WebSocket webSocket) {
 				Gdx.app.log("Log","Open");
@@ -124,13 +124,13 @@ public class GameScreenMulti implements Screen {
 
 			@Override
 			public boolean onMessage(WebSocket webSocket, String packet) {
-				Gdx.app.log("Log","Message");
+				Gdx.app.log("Log","Packet Message: "+packet);
 				return false;
 			}
 
 			@Override
 			public boolean onMessage(WebSocket webSocket, byte[] packet) {
-				Gdx.app.log("Log","Message");
+				Gdx.app.log("Log","Byte Message");
 				return false;
 			}
 
@@ -141,7 +141,9 @@ public class GameScreenMulti implements Screen {
 			}
 		});
 
-		socket.connect();
+		holdsocket.connect();
+
+		return holdsocket;
 	}
 	/*
 	public void connectSocket() {
@@ -353,11 +355,14 @@ public class GameScreenMulti implements Screen {
 	*/
 
 	public GameScreenMulti(final DodgeballGame game) {
+		//socket code
 		this.game = game;
-		configSocket();
-		//connectSocket();
-		//configSocketEvents();
-		//System.out.println(this.game.myroom);
+		socket = configSocket();
+		String message = "Hello from client";
+		print("Sending message: "+message);
+		socket.send(message);
+
+
 		for (int i = 0; i < tilecol.length; i++) {
 			tilerects[i] = new Rectangle();
 			tilerects[i].setWidth(196);
@@ -825,5 +830,7 @@ public class GameScreenMulti implements Screen {
 		return -1;
 	}
 	*/
-	
+	public void print(String str){
+		System.out.println(str);
+	}
 }
