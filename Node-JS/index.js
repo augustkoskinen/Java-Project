@@ -1,54 +1,291 @@
 import { WebSocketServer } from 'ws';
 
 const wss = new WebSocketServer({ port: 8080 });
-const clients= new Map()
+let clients= []
+let rooms = []
+rooms.push(new Roomstruct(rooms,'room0'))
 
 console.log("Server is running...")
 
 wss.on('connection', function connection(ws) {
     console.log("Connected Player")
-    let data = {
-        id : uuidv4()
+    clients.push(new Player(uuidv4(), 0, 0, 0, rooms[rooms.length-1].room,ws));
+    rooms[rooms.length-1].clientlist.push(clients[clients.length-1].id)
+
+    let playerindex = findWS(clients,ws)
+
+    let senddata = {
+        event: 'socketID',
+        id: clients[clients.length-1].id,
+        room: clients[clients.length-1].room
     }
-    clients.set(ws,data)
+    ws.send(JSON.stringify(senddata));
+
+    if(clients.length%2===0){
+        let client = findID(clients,rooms[rooms.length-1].clientlist[0])
+        let client2 = findID(clients,rooms[rooms.length-1].clientlist[1])
+        clients[client].otherid = clients[client2].id
+        clients[client2].otherid = clients[client].id
+        let seed = Math.floor(Math.random() * 10000)
+        let otherws = clients[client].ws
+
+        //p1
+        senddata = {
+            event: 'getPlayers',
+            otherid: clients[client2].id,
+            color: "blue"
+        }
+        otherws.send(JSON.stringify(senddata));
+        senddata = {
+            event: 'startGame',
+            seed: seed
+        }
+        otherws.send(JSON.stringify(senddata));
+
+        //p2
+        senddata = {
+            event: 'getPlayers',
+            otherid: clients[client].id,
+            color: "red"
+        }
+        ws.send(JSON.stringify(senddata));
+        senddata = {
+            event: 'startGame',
+            seed: seed
+        }
+        ws.send(JSON.stringify(senddata));
+
+        rooms.push(rooms,new Roomstruct('room'+rooms.length))
+    }
 
     ws.on('error', console.error);
 
     ws.on('message', (e) => {
-        console.log("Message from client: "+e.data);
+        //console.log("Message from client: " + e);
+        const data = JSON.parse(e);
+        let playerindex = findWS(clients,ws)
+        let roomloc = findRoom(rooms,clients[playerindex].room);
+        let otherws = clients[findID(clients,clients[playerindex].otherid)].ws
+
+        switch (data.event) {
+            case ('playermove') : {
+                clients[playerindex].x = data.x;
+                clients[playerindex].y = data.y;
+                clients[playerindex].rotation = data.rotation;
+                clients[playerindex].xadd2 = data.xadd2;
+                clients[playerindex].yadd2 = data.yadd2;
+                clients[playerindex].moveVectx = data.moveVectx;
+                clients[playerindex].moveVecty = data.moveVecty;
+                clients[playerindex].kbaddx = data.kbaddx;
+                clients[playerindex].kbaddy = data.kbaddy;
+                clients[playerindex].dashvelx = data.dashvelx;
+                clients[playerindex].dashvely = data.dashvely;
+                clients[playerindex].spawnprot = data.spawnprot;
+                clients[playerindex].ballsize = data.ballsize;
+                clients[playerindex].mytime = data.mytime;
+
+                let senddata= {
+                    event: 'movement',
+                    id: data.otherid,
+                    x: data.x,
+                    y: data.y,
+                    rotation: data.rotation,
+                    xadd2: data.xadd2,
+                    yadd2: data.yadd2,
+                    spawnprot2: data.spawnprot,
+                    moveVectx: data.moveVectx,
+                    moveVecty: data.moveVecty,
+                    kbaddx: data.kbaddx,
+                    kbaddy: data.kbaddy,
+                    dashvelx:data.dashvelx,
+                    dashvely: data.dashvely,
+                    ballsize: data.ballsize
+                }
+                otherws.send(JSON.stringify(senddata));
+
+                if (Math.floor(Math.random() * (1500)) === 0) {
+                    senddata = {
+                        event:'makePower',
+                        randpos: Math.random() * 3
+                    }
+                    ws.send(JSON.stringify(senddata));
+                    otherws.send(JSON.stringify(senddata));
+                }
+                break;
+            }
+            case ('shootmyball'): {
+                let senddata = {
+                    event:'shootBullet',
+                    id: clients[findWS(clients,ws)].id,
+                    ballcount: data.ballcount,
+                    ballsize: data.ballsize,
+                    color: data.color
+                }
+                ws.send(JSON.stringify(senddata));
+                otherws.send(JSON.stringify(senddata));
+                break;
+            }
+            case ('updateTiles'): {
+                if (rooms[roomloc].tilerects[rooms[roomloc].rantile].width <= 0) {
+                    rooms[roomloc].rantile = Math.floor(Math.random() * 25);
+                } else if (rooms[roomloc].rantile !== -1) {
+                    if (rooms[roomloc].tilerects[rooms[roomloc].rantile].width > 0) {
+                        var changefactor = rooms[roomloc].time;
+                        rooms[roomloc].tilerects[rooms[roomloc].rantile].width -= (changefactor);
+                        rooms[roomloc].tilerects[rooms[roomloc].rantile].height -= (changefactor);
+                        rooms[roomloc].tilerects[rooms[roomloc].rantile].x += changefactor / 2;
+                        rooms[roomloc].tilerects[rooms[roomloc].rantile].y += changefactor / 2;
+                        let senddata = {
+                            event:'setTiles',
+                            jstilerects: rooms[roomloc].tilerects
+                        }
+                        ws.send(JSON.stringify(senddata));
+                        otherws.send(JSON.stringify(senddata));
+                    }
+                }
+                break;
+            }
+            case ('updateserverpoints') : {
+                for (let i = 0; i < 25; i++) {
+                    rooms[roomloc].tilerects[i] = {
+                        width: 196,
+                        height: 196,
+                        x: (((i % 5) * 196) + 64),
+                        y: (Math.floor(i / 5) * 196 + 64),
+                    }
+                }
+                let senddata = {
+                    event: 'updatePoints',
+                    ran: data.ran,
+                    rantile: data.rantile
+                }
+                otherws.send(JSON.stringify(senddata));
+                break;
+            }
+        }
     });
 
     ws.on("close", () => {
-        clients.delete(ws);
+        let disclient = findWS(clients,ws)
+        let playerindex = findWS(clients,ws)
+        let otherws = clients[findID(clients,clients[playerindex].otherid)].ws
+        rooms.splice(findRoom(rooms,clients[disclient].room),1)
+        clients.splice(disclient,1);
+        let senddata = {
+            event: 'disconnecting',
+        }
+        ws.send(JSON.stringify(senddata));
+        otherws.send(JSON.stringify(senddata))
+
+        console.log("Disconnected Player")
     });
 
-    ws.send('Hello from server');
 });
 
 function uuidv4() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        let r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
     });
 }
 
+function inRoomList(map,room){
+    let list = []
+    for (let i = 0; i < map.length;i++){
+        if(map[i].roomid === room)
+            list.push(i)
+    }
+    return list
+}
+function findID(map,id){
+    for (let i = 0; i < map.length;i++){
+        if(map[i].id === id)
+            return i
+    }
+    return -1
+}
+
+function findRoom(rooms,room){
+    for (let i = 0; i < rooms.length;i++){
+        if(rooms[i].room === room)
+            return i
+    }
+    return -1
+}
+
+function findWS(map,ws){
+    for (let i = 0; i < map.length;i++){
+        if(map[i].ws === ws)
+            return i
+    }
+    return -1
+}
+
+function Player(id, x, y,rot,room,ws){
+    this.ws = ws;
+    this.id = id;
+    this.x = x;
+    this.y = y;
+    this.rotation = rot
+    this.xadd2 = 0;
+    this.yadd2 = 0;
+    this.moveVectx = 0;
+    this.moveVecty = 0;
+    this.kbaddx = 0;
+    this.kbaddy = 0;
+    this.dashvelx = 0;
+    this.dashvely = 0;
+    this.spawnprot = 0;
+    this.ballsize = -1;
+    this.mytime = 0;
+    this.otherid = "";
+    this.room = room;
+}
+
+function Roomstruct(rooms,room){
+    this.time = 0;
+    this.tilerects = [25];
+    this.rantile = Math.floor(Math.random()*25);
+    this.room = room;
+    this.clientlist = [];
+    for(let i  = 0; i <25;i++){
+        this.tilerects[i] = {
+            width:196,
+            height:196,
+            x:(((i % 5) * 196) + 64),
+            y:(Math.floor(i / 5) * 196 + 64),
+        }
+    }
+    //this.num=0
+}
+
 /*
-import { randomInt } from 'crypto';
+function checkRoomsFor(rooms,playernumber){
+    for(var i = 0; i < rooms.length;i++){
+        if(rooms[i].num==playernumber){
+            return i;
+        }
+    }
+    return -1;
+}
+function locateRoom(rooms,name){
+    for(var i = 0; i < rooms.length;i++){
+        if(rooms[i].room==name){
+            return i;
+        }
+    }
+    return -1;
+}
 
-import express from 'express'
-const app = express();
-import http from 'http';
-let server = http.Server(app);
-import { Server } from 'socket.io';
-var io = new Server(server);
-var players = [];
-var rooms = []
-var curroom = ""
-
-server.listen(8080, function(){
-    console.log("Server is now running...");
-});
-
+function locatePlayerByID(players,id){
+    for(var i = 0; i < players.length;i++){
+        if(players[i].id==id){
+            return i;
+        }
+    }
+    return -1;
+}*/
+/*
 io.on("connection", (socket)=>{
     var openroom = checkRoomsFor(rooms,1);
     if(openroom==-1){
@@ -93,149 +330,5 @@ io.on("connection", (socket)=>{
             }
         }
     });
-    socket.on('playermove', function({x, y,rotation,xadd2,yadd2,moveVectx,moveVecty,kbaddx,kbaddy,dashvelx,dashvely,spawnprot,ballsize,mytime,room}){
-        var roomloc = locateRoom(rooms,room);
-        rooms[roomloc].time = 0;
-        for(var i = 0; i < players.length; i++){
-            if(players[i].id == socket.id){
-                players[i].x = x;
-                players[i].y = y;
-                players[i].rotation = rotation;
-                players[i].xadd2 = xadd2;
-                players[i].yadd2 = yadd2;
-                players[i].moveVectx = moveVectx;
-                players[i].moveVecty = moveVecty;
-                players[i].kbaddx = kbaddx;
-                players[i].kbaddy = kbaddy;
-                players[i].dashvelx = dashvelx;
-                players[i].dashvely = dashvely;
-                players[i].spawnprot = spawnprot;
-                players[i].ballsize = ballsize;
-                players[i].mytime = mytime;
-
-                io.to(rooms[roomloc].room).emit('movement', {
-                    id:players[i].id,
-                    x:players[i].x,
-                    y:players[i].y,
-                    spawnprot:players[i].spawnprot,
-                    rotation:players[i].rotation,
-                    xadd2:players[i].xadd2,
-                    yadd2:players[i].yadd2,
-                    moveVectx:players[i].moveVectx,
-                    moveVecty:players[i].moveVecty,
-                    kbaddx:players[i].kbaddx,
-                    kbaddy:players[i].kbaddy,
-                    dashvelx:players[i].dashvelx,
-                    dashvely:players[i].dashvely,
-                    ballsize:players[i].ballsize,
-                });
-            }
-            rooms[roomloc].time+=players[i].mytime;
-        }
-        rooms[roomloc].time/=players.length;
-        if (Math.floor(Math.random() *(1500 * (1 + rooms[roomloc]))) == 0){
-            io.to(rooms[roomloc].room).emit('makePower', {
-                randpos:Math.random()*3
-            });
-        }
-    });
-    socket.on('shootmyball', function({ballcount,ballsize,color,room}){
-        for(var i = 0; i < players.length; i++){
-            if(players[i].id == socket.id){
-                io.to(room).emit('shootBullet', {
-                    id: socket.id,
-                    ballcount:ballcount,
-                    ballsize:ballsize,
-                    color:color
-                });
-            }
-        }
-    });
-    socket.on('updateTiles', function({room}){
-        var roomloc = locateRoom(rooms,room);
-        if (rooms[roomloc].tilerects[rooms[roomloc].rantile].width <= 0) {
-            rooms[roomloc].rantile = Math.floor(Math.random()*25);
-        } else if (rooms[roomloc].rantile != -1) {
-            if (rooms[roomloc].tilerects[rooms[roomloc].rantile].width > 0) {
-                var changefactor = rooms[roomloc].time;
-                rooms[roomloc].tilerects[rooms[roomloc].rantile].width -= (changefactor);
-                rooms[roomloc].tilerects[rooms[roomloc].rantile].height -= (changefactor);
-                rooms[roomloc].tilerects[rooms[roomloc].rantile].x += changefactor / 2;
-                rooms[roomloc].tilerects[rooms[roomloc].rantile].y += changefactor / 2;
-                io.to(rooms[roomloc].room).emit('setTiles', {
-                    jstilerects:rooms[roomloc].tilerects
-                });
-            }
-        }
-    });
-    socket.on('updateserverpoints', function({id,ran,rantile,room}){
-        var roomloc = locateRoom(rooms,room);
-        for(var i  = 0; i <25;i++){
-            rooms[roomloc].tilerects[i] = {
-                width:196,
-                height:196,
-                x:(((i % 5) * 196) + 64),
-                y:(Math.floor(i / 5) * 196 + 64),
-            }
-        }
-        io.to(rooms[roomloc].room).emit('updatePoints', {
-            id: id,
-            ran: ran,
-            rantile: rantile
-        });
-    });
 });
-
-function player(id, x, y,rot,room){
-    this.id = id;
-    this.x = x;
-    this.y = y;
-    this.rotation = rot
-    this.xadd2 = 0;
-    this.yadd2 = 0;
-    this.moveVectx = 0;
-    this.moveVecty = 0;
-    this.kbaddx = 0;
-    this.kbaddy = 0;
-    this.dashvelx = 0;
-    this.dashvely = 0;
-    this.spawnprot = 0;
-    this.ballsize = -1;
-    this.mytime = 0;
-    this.myroom = room;
-}
-
-function roomstruct(room){
-    this.time = 0;
-    this.tilerects = [25];
-    this.rantile = Math.floor(Math.random()*25);
-    this.room = room;
-    this.num=0
-}
-
-function checkRoomsFor(rooms,playernumber){
-    for(var i = 0; i < rooms.length;i++){
-        if(rooms[i].num==playernumber){
-            return i;
-        }
-    }
-    return -1;
-}
-function locateRoom(rooms,name){
-    for(var i = 0; i < rooms.length;i++){
-        if(rooms[i].room==name){
-            return i;
-        }
-    }
-    return -1;
-}
-
-function locatePlayerByID(players,id){
-    for(var i = 0; i < players.length;i++){
-        if(players[i].id==id){
-            return i;
-        }
-    }
-    return -1;
-}
 */

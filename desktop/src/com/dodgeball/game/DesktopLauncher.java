@@ -16,4 +16,7 @@ public class DesktopLauncher {
 		config.setTitle("Dodgeball");
 		new Lwjgl3Application(new DodgeballGame(), config);
 	}
+	void namer(){
+
+	}
 }
