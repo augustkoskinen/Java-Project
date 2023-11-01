@@ -126,7 +126,7 @@ public class GameScreenMulti implements Screen {
 	private Vector3 spawn4 = new Vector3(WORLD_WIDTH / 2, WORLD_HEIGHT - 162, 0);
 
 	public WebSocket configSocket() {
-		WebSocket holdsocket = WebSockets.newSocket(WebSockets.toWebSocketUrl("game2.ejenda.org", 80));//game.ejenda.org:80 127.0.0.1:8080
+		WebSocket holdsocket = WebSockets.newSocket(WebSockets.toSecureWebSocketUrl("game2.ejenda.org", 80));//game.ejenda.org:80 127.0.0.1:8080
 		holdsocket.setSendGracefully(true);
 		holdsocket.addListener(new WebSocketListener() {
 			@Override
