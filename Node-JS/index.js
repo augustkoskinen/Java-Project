@@ -19,6 +19,7 @@ wss.on('connection', function connection(ws) {
         id: clients[clients.length-1].id,
         room: clients[clients.length-1].room
     }
+
     ws.send(JSON.stringify(senddata));
 
     if(clients.length%2===0){
@@ -55,128 +56,126 @@ wss.on('connection', function connection(ws) {
         }
         ws.send(JSON.stringify(senddata));
 
-        rooms.push(rooms,new Roomstruct('room'+rooms.length))
+        console.log(clients)
+        rooms.push(new Roomstruct(rooms,'room'+rooms.length))
     }
 
     ws.on('error', console.error);
-
     ws.on('message', (e) => {
         //console.log("Message from client: " + e);
         const data = JSON.parse(e);
-        let playerindex = findWS(clients,ws)
-        let roomloc = findRoom(rooms,clients[playerindex].room);
-        let otherws = clients[findID(clients,clients[playerindex].otherid)].ws
+        let playerindex = findWS(clients, ws)
+        let roomloc = findRoom(rooms, clients[playerindex].room);
+        let otherws = clients[findID(clients, clients[playerindex].otherid)].ws
+        if (data.event === 'playermove') {
+            clients[playerindex].x = data.x;
+            clients[playerindex].y = data.y;
+            clients[playerindex].rotation = data.rotation;
+            clients[playerindex].xadd2 = data.xadd2;
+            clients[playerindex].yadd2 = data.yadd2;
+            clients[playerindex].moveVectx = data.moveVectx;
+            clients[playerindex].moveVecty = data.moveVecty;
+            clients[playerindex].kbaddx = data.kbaddx;
+            clients[playerindex].kbaddy = data.kbaddy;
+            clients[playerindex].dashvelx = data.dashvelx;
+            clients[playerindex].dashvely = data.dashvely;
+            clients[playerindex].spawnprot = data.spawnprot;
+            clients[playerindex].ballsize = data.ballsize;
+            clients[playerindex].mytime = data.mytime;
 
-        switch (data.event) {
-            case ('playermove') : {
-                clients[playerindex].x = data.x;
-                clients[playerindex].y = data.y;
-                clients[playerindex].rotation = data.rotation;
-                clients[playerindex].xadd2 = data.xadd2;
-                clients[playerindex].yadd2 = data.yadd2;
-                clients[playerindex].moveVectx = data.moveVectx;
-                clients[playerindex].moveVecty = data.moveVecty;
-                clients[playerindex].kbaddx = data.kbaddx;
-                clients[playerindex].kbaddy = data.kbaddy;
-                clients[playerindex].dashvelx = data.dashvelx;
-                clients[playerindex].dashvely = data.dashvely;
-                clients[playerindex].spawnprot = data.spawnprot;
-                clients[playerindex].ballsize = data.ballsize;
-                clients[playerindex].mytime = data.mytime;
+            let senddata = {
+                event: 'movement',
+                id: data.otherid,
+                x: data.x,
+                y: data.y,
+                rotation: data.rotation,
+                xadd2: data.xadd2,
+                yadd2: data.yadd2,
+                spawnprot2: data.spawnprot,
+                moveVectx: data.moveVectx,
+                moveVecty: data.moveVecty,
+                kbaddx: data.kbaddx,
+                kbaddy: data.kbaddy,
+                dashvelx: data.dashvelx,
+                dashvely: data.dashvely,
+                ballsize: data.ballsize
+            }
+            otherws.send(JSON.stringify(senddata));
 
-                let senddata= {
-                    event: 'movement',
-                    id: data.otherid,
-                    x: data.x,
-                    y: data.y,
-                    rotation: data.rotation,
-                    xadd2: data.xadd2,
-                    yadd2: data.yadd2,
-                    spawnprot2: data.spawnprot,
-                    moveVectx: data.moveVectx,
-                    moveVecty: data.moveVecty,
-                    kbaddx: data.kbaddx,
-                    kbaddy: data.kbaddy,
-                    dashvelx:data.dashvelx,
-                    dashvely: data.dashvely,
-                    ballsize: data.ballsize
+            if (Math.floor(Math.random() * (1500)) === 0) {
+                senddata = {
+                    event: 'makePower',
+                    randpos: Math.random() * 3
                 }
+                ws.send(JSON.stringify(senddata));
                 otherws.send(JSON.stringify(senddata));
-
-                if (Math.floor(Math.random() * (1500)) === 0) {
-                    senddata = {
-                        event:'makePower',
-                        randpos: Math.random() * 3
+            }
+        }
+        if (data.event === 'shootmyball') {
+            let senddata = {
+                event:'shootBullet',
+                id: clients[findWS(clients,ws)].id,
+                ballcount: data.ballcount,
+                ballsize: data.ballsize,
+                color: data.color
+            }
+            ws.send(JSON.stringify(senddata));
+            otherws.send(JSON.stringify(senddata));
+        }
+        if (data.event === 'updateTiles'){
+            if (rooms[roomloc].tilerects[rooms[roomloc].rantile].width <= 0) {
+                rooms[roomloc].rantile = Math.floor(Math.random() * 25);
+            } else if (rooms[roomloc].rantile !== -1) {
+                if (rooms[roomloc].tilerects[rooms[roomloc].rantile].width > 0) {
+                    var changefactor = rooms[roomloc].time;
+                    rooms[roomloc].tilerects[rooms[roomloc].rantile].width -= (changefactor);
+                    rooms[roomloc].tilerects[rooms[roomloc].rantile].height -= (changefactor);
+                    rooms[roomloc].tilerects[rooms[roomloc].rantile].x += changefactor / 2;
+                    rooms[roomloc].tilerects[rooms[roomloc].rantile].y += changefactor / 2;
+                    let senddata = {
+                        event:'setTiles',
+                        jstilerects: rooms[roomloc].tilerects
                     }
                     ws.send(JSON.stringify(senddata));
                     otherws.send(JSON.stringify(senddata));
                 }
-                break;
             }
-            case ('shootmyball'): {
-                let senddata = {
-                    event:'shootBullet',
-                    id: clients[findWS(clients,ws)].id,
-                    ballcount: data.ballcount,
-                    ballsize: data.ballsize,
-                    color: data.color
+        }
+        if (data.event === 'updateserverpoints') {
+            for (let i = 0; i < 25; i++) {
+                rooms[roomloc].tilerects[i] = {
+                    width: 196,
+                    height: 196,
+                    x: (((i % 5) * 196) + 64),
+                    y: (Math.floor(i / 5) * 196 + 64),
                 }
-                ws.send(JSON.stringify(senddata));
-                otherws.send(JSON.stringify(senddata));
-                break;
             }
-            case ('updateTiles'): {
-                if (rooms[roomloc].tilerects[rooms[roomloc].rantile].width <= 0) {
-                    rooms[roomloc].rantile = Math.floor(Math.random() * 25);
-                } else if (rooms[roomloc].rantile !== -1) {
-                    if (rooms[roomloc].tilerects[rooms[roomloc].rantile].width > 0) {
-                        var changefactor = rooms[roomloc].time;
-                        rooms[roomloc].tilerects[rooms[roomloc].rantile].width -= (changefactor);
-                        rooms[roomloc].tilerects[rooms[roomloc].rantile].height -= (changefactor);
-                        rooms[roomloc].tilerects[rooms[roomloc].rantile].x += changefactor / 2;
-                        rooms[roomloc].tilerects[rooms[roomloc].rantile].y += changefactor / 2;
-                        let senddata = {
-                            event:'setTiles',
-                            jstilerects: rooms[roomloc].tilerects
-                        }
-                        ws.send(JSON.stringify(senddata));
-                        otherws.send(JSON.stringify(senddata));
-                    }
-                }
-                break;
+            let senddata = {
+                event: 'updatePoints',
+                ran: data.ran,
+                rantile: data.rantile
             }
-            case ('updateserverpoints') : {
-                for (let i = 0; i < 25; i++) {
-                    rooms[roomloc].tilerects[i] = {
-                        width: 196,
-                        height: 196,
-                        x: (((i % 5) * 196) + 64),
-                        y: (Math.floor(i / 5) * 196 + 64),
-                    }
-                }
-                let senddata = {
-                    event: 'updatePoints',
-                    ran: data.ran,
-                    rantile: data.rantile
-                }
-                otherws.send(JSON.stringify(senddata));
-                break;
-            }
+            otherws.send(JSON.stringify(senddata));
         }
     });
 
     ws.on("close", () => {
         let disclient = findWS(clients,ws)
-        let playerindex = findWS(clients,ws)
-        let otherws = clients[findID(clients,clients[playerindex].otherid)].ws
-        rooms.splice(findRoom(rooms,clients[disclient].room),1)
-        clients.splice(disclient,1);
-        let senddata = {
-            event: 'disconnecting',
+        let otherclient = findID(clients,clients[disclient].otherid)
+        if(otherclient!=-1){
+            let otherws = clients[otherclient].ws
+            let senddata = {
+                event: 'disconnecting',
+            }
+            ws.send(JSON.stringify(senddata));
+            otherws.send(JSON.stringify(senddata))
+            ws.close();
+            otherws.close();
+        } else {
+            rooms.splice(findRoom(rooms,clients[disclient].room),1)
+            rooms.push(new Roomstruct(rooms,'room'+rooms.length))
         }
-        ws.send(JSON.stringify(senddata));
-        otherws.send(JSON.stringify(senddata))
-
+        clients.splice(disclient,1);
         console.log("Disconnected Player")
     });
 

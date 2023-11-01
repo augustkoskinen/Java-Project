@@ -5,11 +5,11 @@ import java.io.*;
 import java.net.*;
 //import com.google.gwt.json.client.*;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.GsonBuilder;
-import com.google.gson.ToNumberPolicy;
+import com.google.gwt.core.client.JsonUtils;
 import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.json.client.JSONString;
+import com.google.gwt.json.client.JSONValue;
 
 import com.badlogic.gdx.utils.*;
 
@@ -28,7 +28,6 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.Input;
-import com.google.gwt.json.client.JSONValue;
 
 /*
 import com.badlogic.gdx.utils.TimeUtils;
@@ -47,10 +46,8 @@ import com.badlogic.gdx.Input.Keys;
 */
 
 public class GameScreenMulti implements Screen {
-	public Gson gson = new GsonBuilder()
-			.setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
-			.create();;
 	private WebSocket socket;
+	private String mystring = "";
 	private boolean start = false;
 	private String mycolor = "red";
 	private String myid = "";
@@ -121,7 +118,7 @@ public class GameScreenMulti implements Screen {
 	private Vector3 spawn4 = new Vector3(WORLD_WIDTH / 2, WORLD_HEIGHT - 162, 0);
 
 	public WebSocket configSocket(){
-		WebSocket holdsocket = WebSockets.newSocket(WebSockets.toWebSocketUrl("127.0.0.1", 8080));//wss://game2.ejenda.org http://localhost:8080
+		WebSocket holdsocket = WebSockets.newSocket(WebSockets.toWebSocketUrl("127.0.0.1", 8080));//game.ejenda.org 127.0.0.1
 		holdsocket.setSendGracefully(true);
 		holdsocket.addListener(new WebSocketListener() {
 			@Override
@@ -138,130 +135,121 @@ public class GameScreenMulti implements Screen {
 
 			@Override
 			public boolean onMessage(WebSocket webSocket, String packet) {
-				JsonObject data = gson.fromJson(packet, JsonObject.class);
-				//Gdx.app.log("Log","Packet Message: "+data);
-
-				switch (data.get("event").getAsString()){
-					case "socketID" : {
-						myid = data.get("id").getAsString();
-						game.myroom = data.get("room").getAsString();
-						Gdx.app.log("Websocket", "My ID: " + myid);
-						break;
-					}
-					case "getPlayers" : {
-						otherid = data.get("otherid").getAsString();
-						mycolor = data.get("color").getAsString();
-						Gdx.app.log("Websocket", "Other ID: " + otherid);
-						break;
-					}
-					case "disconnecting" : {
-						start = false;
-						socket.close();
-						break;
-					}
-					case "startGame" : {
-						//other vars
-						start = true;
-						String seed = data.get("seed").getAsString();
-						random = new Random(parseInt(seed));
-						rantile = random.nextInt(25);
-						break;
-					}
-					case "movement" : {
-						float x = data.get("x").getAsFloat();
-						float y = data.get("y").getAsFloat();
-						spawnprot2 = data.get("spawnprot2").getAsFloat();
-						moveVectx = data.get("moveVectx").getAsFloat();
-						moveVecty = data.get("moveVecty").getAsFloat();
-						dashvel2x = data.get("dashvelx").getAsFloat();
-						dashvel2y = data.get("dashvely").getAsFloat();
-						ballsize2 = data.get("ballsize").getAsFloat();
-						player2.setPosition(x,y);
-						playerrot2 = data.get("rotation").getAsFloat();
-						kb.x+= data.get("kbaddx").getAsFloat();
-						kb.y+= data.get("kbaddy").getAsFloat();
-						xadd2 = data.get("xadd2").getAsFloat();
-						yadd2 = data.get("yadd2").getAsFloat();
-						break;
-					}
-					case "shootBullet" : {
-						if (data.get("id").getAsString().equals(otherid)){
-							int ballamount = data.get("ballcount").getAsInt();
-							float ballsize = (float)data.get("ballsize").getAsFloat();
-							int mult = 0;
-							for (int i = 0; i<ballamount;i++){
-								if(i==1){
-									mult = 1;
-								} else if(i==2){
-									mult = -1;
-								}
-								Ball ball = new Ball();
-								ball.rotation = playerrot2;
-								ball.changeColor(data.get("color").getAsString());
-								Vector3 ballpos = MovementMath.lengthDir(playerrot2+0.349066f*mult, 40f);
-								Vector3 ballvel = MovementMath.lengthDir(playerrot2+0.349066f*mult, ballsize * 80 + 50f);
-								ball.circ.setPosition(player2.x + ballpos.x + 28, player2.y + ballpos.y + 28);
-								ball.velocity = ballvel;
-								ball.ballsprite.setRotation(playerrot2+0.349066f*mult);
-								ball.ballsprite.setScale(ballsize / 8);
-								ball.circ.radius = ballsize / 2;
-								blueballs.add(ball);
+				//Gdx.app.log("Log","hiiii");//good luck charm; dont touch
+				JSONObject data = JSONParser.parse(packet).isObject();
+				String event =data.get("event").isString().stringValue();
+				Gdx.app.log("Log","Packet Message: "+data);
+				if(event.equals("socketID")) {
+					myid = data.get("id").isString().stringValue();
+					game.myroom = data.get("room").isString().stringValue();
+					Gdx.app.log("Websocket", "My ID: " + myid);
+				}
+				if(event.equals("getPlayers")) {
+					otherid = data.get("otherid").isString().stringValue();
+					mycolor = data.get("color").isString().stringValue();
+					Gdx.app.log("Websocket", "Other ID: " + otherid);
+				}
+				if(event.equals("disconnecting")) {
+					start = false;
+					socket.close();
+				}
+				if(event.equals("startGame")) {
+					//other vars
+					start = true;
+					int seed = (int)data.get("seed").isNumber().doubleValue();
+					random = new Random(seed);
+					rantile = random.nextInt(25);
+					//mystring = "here";//data.get("id").isString().stringValue();
+				}
+				if(event.equals("movement")) {
+					float x =(float) data.get("x").isNumber().doubleValue();
+					float y = (float) data.get("y").isNumber().doubleValue();
+					spawnprot2 = (float) data.get("spawnprot2").isNumber().doubleValue();
+					moveVectx = (float) data.get("moveVectx").isNumber().doubleValue();
+					moveVecty = (float) data.get("moveVecty").isNumber().doubleValue();
+					dashvel2x = (float) data.get("dashvelx").isNumber().doubleValue();
+					dashvel2y = (float) data.get("dashvely").isNumber().doubleValue();
+					ballsize2 = (float) data.get("ballsize").isNumber().doubleValue();
+					player2.setPosition(x,y);
+					playerrot2 = (float) data.get("rotation").isNumber().doubleValue();
+					kb.x+= (float) data.get("kbaddx").isNumber().doubleValue();
+					kb.y+= (float) data.get("kbaddy").isNumber().doubleValue();
+					xadd2 = (float) data.get("xadd2").isNumber().doubleValue();
+					yadd2 = (float) data.get("yadd2").isNumber().doubleValue();
+				}
+				if(event.equals("shootBullet")) {
+					if (data.get("id").isString().stringValue().equals(otherid)){
+						int ballamount = (int)data.get("ballcount").isNumber().doubleValue();
+						float ballsize = (float)data.get("ballsize").isNumber().doubleValue();
+						int mult = 0;
+						for (int i = 0; i<ballamount;i++){
+							if(i==1){
+								mult = 1;
+							} else if(i==2){
+								mult = -1;
 							}
+							Ball ball = new Ball();
+							ball.rotation = playerrot2;
+							ball.changeColor(data.get("color").isString().stringValue());
+							Vector3 ballpos = MovementMath.lengthDir(playerrot2+0.349066f*mult, 40f);
+							Vector3 ballvel = MovementMath.lengthDir(playerrot2+0.349066f*mult, ballsize * 80 + 50f);
+							ball.circ.setPosition(player2.x + ballpos.x + 28, player2.y + ballpos.y + 28);
+							ball.velocity = ballvel;
+							ball.ballsprite.setRotation(playerrot2+0.349066f*mult);
+							ball.ballsprite.setScale(ballsize / 8);
+							ball.circ.radius = ballsize / 2;
+							blueballs.add(ball);
 						}
-						break;
 					}
-					case "updatePoints" : {
-						points++;
-						ballsize = 8;
-						ballsize2 = 8;
-						ran = data.get("ran").getAsInt();
-						kb = new Vector3(0, 0, 0);
-						spawnprot2 = 40.0f;
-						for (int i = 0; i < tilecol.length; i++) {
-							tilerects[i].setWidth(196);
-							tilerects[i].setHeight(196);
-							tilerects[i].setPosition((((i % 5) * 196) + 64), (float) (Math.floor(i / 5f) * 196 + 64));
-							rantile = data.get("rantile").getAsInt();
-							rantilerespawn = -1;
+				}
+				if( event.equals("updatePoints")) {
+					points++;
+					ballsize = 8;
+					ballsize2 = 8;
+					ran = (int)data.get("ran").isNumber().doubleValue();
+					kb = new Vector3(0, 0, 0);
+					spawnprot2 = 40.0f;
+					for (int i = 0; i < tilecol.length; i++) {
+						tilerects[i].setWidth(196);
+						tilerects[i].setHeight(196);
+						tilerects[i].setPosition((((i % 5) * 196) + 64), (float) (Math.floor(i / 5f) * 196 + 64));
+						rantile = (int)data.get("rantile").isNumber().doubleValue();
+						rantilerespawn = -1;
+					}
+					tilecol[0] = true;
+					tilecol2[0] = true;
+					player2.setPosition(WORLD_WIDTH / 2 - 32, WORLD_HEIGHT / 2 - 32);
+				}
+				if(event.equals( "setTiles")){
+					for(int i = 0; i < 25; i++){
+						tilerects[i].width =(float) data.get("jstilerects").isArray().get(i).isObject().get("width").isNumber().doubleValue();
+						tilerects[i].height =(float) data.get("jstilerects").isArray().get(i).isObject().get("height").isNumber().doubleValue();
+						tilerects[i].setPosition((float) data.get("jstilerects").isArray().get(i).isObject().get("x").isNumber().doubleValue(),(float) data.get("jstilerects").isArray().get(i).isObject().get("y").isNumber().doubleValue());
+					}
+				}
+				if( event.equals("makePower")){
+					Power power = new Power();
+					power.type = (int) (Math.random() * 5);
+					switch ((int)data.get("randpos").isNumber().doubleValue()) {
+						case 0: {
+							power.assignCircleValues(24, new Vector3(spawn1.x - 32, spawn1.y - 32, 0));
+							break;
 						}
-						tilecol[0] = true;
-						tilecol2[0] = true;
-						player2.setPosition(WORLD_WIDTH / 2 - 32, WORLD_HEIGHT / 2 - 32);
-						break;
-					}
-					case "setTiles": {
-						for(int i = 0; i < 25; i++){
-							tilerects[i].width =data.get("jstilerects").getAsJsonArray().get(i).getAsJsonObject().get("width").getAsFloat();
-							tilerects[i].height =data.get("jstilerects").getAsJsonArray().get(i).getAsJsonObject().get("height").getAsFloat();
-							tilerects[i].setPosition(data.get("jstilerects").getAsJsonArray().get(i).getAsJsonObject().get("x").getAsFloat(),data.get("jstilerects").getAsJsonArray().get(i).getAsJsonObject().get("y").getAsFloat());
+						case 1: {
+							power.assignCircleValues(24, new Vector3(spawn2.x - 32, spawn2.y - 32, 0));
+							break;
 						}
-						break;
-					}
-				case "makePower" : {
-						Power power = new Power();
-						power.type = (int) (Math.random() * 5);
-						switch (data.get("randpos").getAsInt()) {
-							case 0: {
-								power.assignCircleValues(24, new Vector3(spawn1.x - 32, spawn1.y - 32, 0));
-								break;
-							}
-							case 1: {
-								power.assignCircleValues(24, new Vector3(spawn2.x - 32, spawn2.y - 32, 0));
-								break;
-							}
-							case 2: {
-								power.assignCircleValues(24, new Vector3(spawn3.x - 32, spawn3.y - 32, 0));
-								break;
-							}
-							case 3: {
-								power.assignCircleValues(24, new Vector3(spawn4.x - 32, spawn4.y - 32, 0));
-								break;
-							}
+						case 2: {
+							power.assignCircleValues(24, new Vector3(spawn3.x - 32, spawn3.y - 32, 0));
+							break;
 						}
-						power.asignType(0);
-						poweruparray.add(power);
-						break;
+						case 3: {
+							power.assignCircleValues(24, new Vector3(spawn4.x - 32, spawn4.y - 32, 0));
+							break;
+						}
 					}
+					power.asignType(0);
+					poweruparray.add(power);
 				}
 				return false;
 			}
@@ -365,15 +353,16 @@ public class GameScreenMulti implements Screen {
 				myballs.add(ball);
 			}
 
-			JsonObject data = new JsonObject();
-			data.addProperty("event", "shootmyball");
-			data.addProperty("id", myid);
-			data.addProperty("otherid", otherid);
-			data.addProperty("ballcount", ballamount);
-			data.addProperty("ballsize", ballsize);
-			data.addProperty("color", mycolor);
-			data.addProperty("room", game.myroom);
-			socket.send(gson.toJson(data));
+			JSONObject data = new JSONObject();
+			data.put("event",new JSONString("shootmyball"));
+			data.put("event", new JSONString("shootmyball"));
+			data.put("id", new JSONString(myid));
+			data.put("otherid", new JSONString(otherid));
+			data.put("ballcount", new JSONString(ballamount+""));
+			data.put("ballsize", new JSONString(ballsize+""));
+			data.put("color", new JSONString(mycolor));
+			data.put("room", new JSONString(game.myroom));
+			socket.send(JsonUtils.stringify(data.getJavaScriptObject()));
 
 			canreleaseball = false;
 			spawnprot = -1;
@@ -411,42 +400,44 @@ public class GameScreenMulti implements Screen {
 		//new Timer().scheduleAtFixedRate(new TimerTask(){
 			//@Override
 			//public void run(){
-		JsonObject data = new JsonObject();
-		data.addProperty("event", "playermove");
-		data.addProperty("x",player.x+"");
-		data.addProperty("y",player.y+"");
-		data.addProperty("rotation",playerrot+"");
-		data.addProperty("xadd2",xadd2+"");
-		data.addProperty("yaddd2",yadd2+"");
-		data.addProperty("moveVectx",moveVectx+"");
-		data.addProperty("moveVecty",moveVecty+"");
-		data.addProperty("kbaddx",kbaddx+"");
-		data.addProperty("kbaddy",kbaddy+"");
-		data.addProperty("dashvelx",dashvel.x+"");
-		data.addProperty("dashvely",dashvel.y+"");
-		data.addProperty("spawnprot",spawnprot+"");
-		data.addProperty("id", myid);
-		data.addProperty("otherid", otherid);
+		JSONObject data = new JSONObject();
+		data.put("event", new JSONString("playermove"));
+		data.put("x",new JSONString(player.x+""));
+		data.put("y",new JSONString(player.y+""));
+		data.put("rotation",new JSONString(playerrot+""));
+		data.put("xadd2",new JSONString(xadd2+""));
+		data.put("yaddd2",new JSONString(yadd2+""));
+		data.put("moveVectx",new JSONString(moveVectx+""));
+		data.put("moveVecty",new JSONString(moveVecty+""));
+		data.put("kbaddx",new JSONString(kbaddx+""));
+		data.put("kbaddy",new JSONString(kbaddy+""));
+		data.put("dashvelx",new JSONString(dashvel.x+""));
+		data.put("dashvely",new JSONString(dashvel.y+""));
+		data.put("spawnprot",new JSONString(spawnprot+""));
+		data.put("id", new JSONString(myid));
+		data.put("otherid", new JSONString(otherid));
 		if(canreleaseball)
-			data.addProperty("ballsize",ballsize+"");
+			data.put("ballsize",new JSONString(ballsize+""));
 		else
-			data.addProperty("ballsize",(-1f)+"");
+			data.put("ballsize",new JSONString((-1f)+""));
 		//data.add("mytime", Gdx.graphics.getDeltaTime());
-		data.addProperty("room",game.myroom);
-		socket.send(gson.toJson(data));
-			//}
+		data.put("room",new JSONString(game.myroom));
+		//mystring = JsonUtils.stringify(data.getJavaScriptObject());
+		mystring = socket.getUrl();
+		socket.send(JsonUtils.stringify(data.getJavaScriptObject()));
+		//}
 		//},(long)100,(long)1000);
 		//new Timer().scheduleAtFixedRate(new TimerTask(){
 			//@Override
 			//public void run(){
 
 				//Array<String> data = new Array<>();
-		JsonObject data2 = new JsonObject();
-		data2.addProperty("event","updateTiles");
-		data2.addProperty("room",game.myroom);
-		data2.addProperty("id", myid);
-		data2.addProperty("otherid", otherid);
-		socket.send(gson.toJson(data2));
+		JSONObject data2 = new JSONObject();
+		data2.put("event",new JSONString("updateTiles"));
+		data2.put("room",new JSONString(game.myroom));
+		data2.put("id", new JSONString(myid));
+		data2.put("otherid", new JSONString(otherid));
+		socket.send(JsonUtils.stringify(data2.getJavaScriptObject()));
 			//}
 		//},(long)100,(long)1000);
 
@@ -577,14 +568,14 @@ public class GameScreenMulti implements Screen {
 				tilecol[0] = true;
 				tilecol2[0] = true;
 				player.setPosition(WORLD_WIDTH / 2 - 32, WORLD_HEIGHT / 2 - 32);
-				JsonObject data = new JsonObject();
-				data.addProperty("event","updateserverpoints");
-				data.addProperty("id", myid);
-				data.addProperty("otherid", otherid);
-				data.addProperty("winnerid",id);
-				data.addProperty("ran",random.nextInt(4)+"");
-				data.addProperty("rantile",random.nextInt(25)+"");
-				socket.send(gson.toJson(data));
+				JSONObject data = new JSONObject();
+				data.put("event",new JSONString("updateserverpoints"));
+				data.put("winnerid",new JSONString(id));
+				data.put("ran",new JSONString(random.nextInt(4)+""));
+				data.put("rantile",new JSONString(random.nextInt(25)+""));
+				data.put("id", new JSONString(myid));
+				data.put("otherid", new JSONString(otherid));
+				socket.send(JsonUtils.stringify(data.getJavaScriptObject()));
 			}
 			if (spawnprot <= 0)
 				playerSprite.draw(batch, 1);
@@ -627,10 +618,12 @@ public class GameScreenMulti implements Screen {
 				game.font.draw(batch, (1 + (int) playerpowercooldown / 4) + "", player.x + 16,player.y + player.radius * 2 + 24);
 			if (dashcooldown > 0)
 				game.font.draw(batch, "" + (1 + (int) dashcooldown / 4), player.x + 24, player.y);
-			batch.end();
+			
+				batch.end();
 
 			game.batch.begin();
 			game.font.draw(game.batch, "Points: " + points, 10, 470);
+			game.font.draw(game.batch, socket.toString(), 0, 300);
 			game.font.draw(game.batch, "Opponent Points: " + points2, 440, 470);
 			game.batch.end();
 		}
