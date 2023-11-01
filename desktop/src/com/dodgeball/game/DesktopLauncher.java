@@ -8,12 +8,15 @@ import com.dodgeball.game.DodgeballGame;
 // Please note that on macOS your application needs to be started with the -XstartOnFirstThread JVM argument
 public class DesktopLauncher {
 	public static void main (String[] arg) {
+		//starting websockets
 		CommonWebSockets.initiate();
+
+		//instantiating game
 		Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
 		config.setForegroundFPS(120);
 		config.setWindowedMode(800, 480);
 		config.useVsync(true);
 		config.setTitle("Dodgeball");
-		new Lwjgl3Application(new DodgeballGame("desktop"), config);
+		new Lwjgl3Application(new DodgeballGame(), config);
 	}
 }

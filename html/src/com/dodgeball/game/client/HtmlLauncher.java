@@ -28,7 +28,8 @@ public class HtmlLauncher extends GwtApplication {
 
         @Override
         public ApplicationListener createApplicationListener () {
+                //instantiating game for html
                 GwtWebSockets.initiate();
-                return new DodgeballGame("html");
+                return new DodgeballGame();
         }
 }

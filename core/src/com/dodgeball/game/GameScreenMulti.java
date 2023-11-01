@@ -1,28 +1,19 @@
 package com.dodgeball.game;
 
 import java.util.*;
-import java.io.*;
-import java.net.*;
-//import com.google.gwt.json.client.*;
+import static java.lang.Float.parseFloat;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsonUtils;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
-import com.google.gwt.json.client.JSONArray;
-import java.lang.String.*;
-import java.lang.Integer.*;
-import java.lang.Float.*;
-import com.google.gwt.json.client.JSONValue;
 
-import com.badlogic.gdx.utils.*;
 
-import com.github.czyzby.websocket.serialization.Serializer;
 import com.github.czyzby.websocket.WebSocketListener;
 import com.github.czyzby.websocket.WebSocket;
 import com.github.czyzby.websocket.WebSockets;
 
+import com.badlogic.gdx.utils.*;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -34,30 +25,11 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.Input;
 
-import static java.lang.Float.parseFloat;
-
-/*
-import com.badlogic.gdx.utils.TimeUtils;
-import com.badlogic.gdx.math.Intersector;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.ApplicationListener;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.audio.Sound;
-import java.lang.Object;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import java.util.Iterator;
-import com.badlogic.gdx.Input.Keys;
-*/
-
 public class GameScreenMulti implements Screen {
+	//vars and objects
 	private WebSocket socket;
-	private int array;
-	private String mystring = "";
-	private float mynum = 0;
 	private boolean start = false;
+	private boolean disconnected = false;
 	private String mycolor = "red";
 	private String myid = "";
 	private String otherid = "";
@@ -67,8 +39,6 @@ public class GameScreenMulti implements Screen {
 	static final int WORLD_HEIGHT = 1108;
 	static final float SPEED = 200f;
 	static final float DASHSPEED = 1500f;
-	static final float SPEED2 = 200f;
-	static final float DASHSPEED2 = 1500f;
 	Random random;
 	int ran;
 	int rantile;
@@ -125,44 +95,57 @@ public class GameScreenMulti implements Screen {
 	private Vector3 spawn3 = new Vector3(WORLD_WIDTH - 162, WORLD_HEIGHT / 2, 0);
 	private Vector3 spawn4 = new Vector3(WORLD_WIDTH / 2, WORLD_HEIGHT - 162, 0);
 
+	//configure the socket and its events
 	public WebSocket configSocket() {
-		WebSocket holdsocket = WebSockets.newSocket("wss://game2.ejenda.org");//game.ejenda.org:80 127.0.0.1:8080
+		//localhost: WebSockets.newSocket(WebSockets.toWebSocketUrl("127.0.0.1", 8080));
+		//graham server: WebSockets.newSocket(wss://game2.ejenda.org);
+		WebSocket holdsocket = WebSockets.newSocket("ws://localhost:8080");//wss://game2.ejenda.org ws://127.0.0.1:8090
 		holdsocket.setSendGracefully(true);
 		holdsocket.addListener(new WebSocketListener() {
 			@Override
 			public boolean onOpen(WebSocket webSocket) {
-				Gdx.app.log("Log", "Open");
+				//Gdx.app.log("Log", "Open");
 				return false;
 			}
 
 			@Override
 			public boolean onClose(WebSocket webSocket, int closeCode, String reason) {
-				Gdx.app.log("Log", "Close");
+				//Gdx.app.log("Log", "Close");
 				return false;
 			}
 
 			@Override
 			public boolean onMessage(WebSocket webSocket, String packet) {
-				//Gdx.app.log("Log","hiiii");//good luck charm; dont touch
+				//gathers data
 				JSONObject data = JSONParser.parse(packet).isObject();
 				String event = data.get("event").isString().stringValue();
-				//mystring = event;
-				//Gdx.app.debug("MyTag", "my debug message");
-				Gdx.app.log("Log", "Packet Message: " + data);
+				//Gdx.app.log("Log", "Packet Message: " + data);
+
+				//goes through event list
 				if (event.equals("socketID")) {
+					//sets up vars for id and room
 					myid = data.get("id").isString().stringValue();
 					game.myroom = data.get("room").isString().stringValue();
-					Gdx.app.log("Websocket", "My ID: " + myid);
+					//Gdx.app.log("Websocket", "My ID: " + myid);
 				}
+
+				//getting players event
 				if (event.equals("getPlayers")) {
+					//gets other player id and colors
 					otherid = data.get("otherid").isString().stringValue();
 					mycolor = data.get("color").isString().stringValue();
 					Gdx.app.log("Websocket", "Other ID: " + otherid);
 				}
+
+				//disconnect event
 				if (event.equals("disconnecting")) {
+					//disconnects players
 					start = false;
+					disconnected = true;
 					socket.close();
 				}
+
+				//start event
 				if (event.equals("startGame")) {
 					//other vars
 					start = true;
@@ -171,14 +154,16 @@ public class GameScreenMulti implements Screen {
 					rantile = random.nextInt(25);
 				}
 
+				//movement event
 				if (event.equals("movement")) {
 					if (data.get("id").isString().stringValue().equals(myid)) {
+						//necessary for whatever reason
 						parseFloat(data.get("x").isString().stringValue());
 
+						//getting variables out of json
 						float x = parseFloat(data.get("x").isString().stringValue());
 						float y = parseFloat(data.get("y").isString().stringValue());
 						player2.setPosition(x, y);
-
 						spawnprot2 = parseFloat(data.get("spawnprot2").isString().stringValue());
 						moveVectx = parseFloat(data.get("moveVectx").isString().stringValue());
 						moveVecty = parseFloat(data.get("moveVecty").isString().stringValue());
@@ -191,6 +176,7 @@ public class GameScreenMulti implements Screen {
 						xadd2 = parseFloat(data.get("xadd2").isString().stringValue());
 						yadd2 = parseFloat(data.get("yadd2").isString().stringValue());
 					}
+					//gets tiles
 					for (int i = 0; i < 25; i++) {
 						JSONObject curRect = data.get("jstilerects").isArray().get(i).isObject();
 						tilerects[i].width = (float) curRect.get("width").isNumber().doubleValue();
@@ -198,8 +184,13 @@ public class GameScreenMulti implements Screen {
 						tilerects[i].setPosition((float)(curRect.get("x").isNumber().doubleValue()), (float)(curRect.get("y").isNumber().doubleValue()));
 					}
 				}
+
+				//bullet event
 				if (event.equals("shootBullet")) {
+					//necessary for whatever reason
 					parseFloat(data.get("ballsize").isString().stringValue());
+
+					//creates new bullets of other player
 					if (data.get("id").isString().stringValue().equals(otherid)) {
 						int ballamount = (int) parseFloat(data.get("ballcount").isString().stringValue());
 						float ballsize = parseFloat(data.get("ballsize").isString().stringValue());
@@ -224,8 +215,13 @@ public class GameScreenMulti implements Screen {
 						}
 					}
 				}
+
+				//update event
 				if (event.equals("updatePoints")) {
+					//necessary for whatever reason
 					parseFloat(data.get("ran").isString().stringValue());
+
+					//resets player and updates points
 					points++;
 					ballsize = 8;
 					ballsize2 = 8;
@@ -242,11 +238,13 @@ public class GameScreenMulti implements Screen {
 					tilecol[0] = true;
 					tilecol2[0] = true;
 					player2.setPosition(WORLD_WIDTH / 2 - 32, WORLD_HEIGHT / 2 - 32);
-					//mystring = "here";
 				}
+
+				//power event
 				if (event.equals("makePower")) {
+					//makes new power based on server power
+
 					Power power = new Power();
-					//power.type = (int) (Math.random() * 5);
 					switch ((int) data.get("randpos").isNumber().doubleValue()) {
 						case 0: {
 							power.assignCircleValues(24, new Vector3(spawn1.x - 32, spawn1.y - 32, 0));
@@ -273,13 +271,13 @@ public class GameScreenMulti implements Screen {
 
 			@Override
 			public boolean onMessage(WebSocket webSocket, byte[] packet) {
-				Gdx.app.log("Log", "Byte Message: ");
+				//Gdx.app.log("Log", "Byte Message: ");
 				return false;
 			}
 
 			@Override
 			public boolean onError(WebSocket webSocket, Throwable error) {
-				Gdx.app.log("Log", "Error");
+				//Gdx.app.log("Log", "Error");
 				return false;
 			}
 		});
@@ -303,6 +301,7 @@ public class GameScreenMulti implements Screen {
 			tilecol2[i] = false;
 		}
 
+		//creating textures and other objects
 		batch = new SpriteBatch();
 		player = new Circle();
 		player2 = new Circle();
@@ -317,17 +316,22 @@ public class GameScreenMulti implements Screen {
 		Vector3 moveMag = new Vector3(0, 0, 0);
 		float xadd = 0;
 		float yadd = 0;
+
+		//player movement
 		if (moveVect.x != 0 || moveVect.y != 0) {
 			playerrot = MovementMath.pointDir(new Vector3(0, 0, 0), moveVect);
 			moveMag = MovementMath.lengthDir(playerrot, 1);
 			xadd = moveMag.x * SPEED * Gdx.graphics.getDeltaTime();
 			yadd = moveMag.y * SPEED * Gdx.graphics.getDeltaTime();
 		}
+
+		//dashes
 		if (Gdx.input.isKeyJustPressed(Input.Keys.G) && dashcooldown <= 0 && (moveVect.x != 0 || moveVect.y != 0)) {
 			dashvel = new Vector3(moveMag.x * DASHSPEED, moveMag.y * DASHSPEED, 0);
 			dashcooldown = 20;
 		}
 
+		//limits
 		kb.x *= 0.8f;
 		kb.y *= 0.8f;
 		kbaddx *= 0.5f;
@@ -335,6 +339,7 @@ public class GameScreenMulti implements Screen {
 		dashvel.x *= 0.8f;
 		dashvel.y *= 0.8f;
 
+		//visible movement
 		player.x += xadd + kb.x * Gdx.graphics.getDeltaTime() + dashvel.x * Gdx.graphics.getDeltaTime();
 		player.y += yadd + kb.y * Gdx.graphics.getDeltaTime() + dashvel.y * Gdx.graphics.getDeltaTime();
 
@@ -344,6 +349,8 @@ public class GameScreenMulti implements Screen {
 		}
 		playerSprite2.setPosition(player2.x, player2.y);
 		playerSprite2.setRotation((float) Math.toDegrees((float) playerrot2));
+
+		//shoot ball
 		if (!Gdx.input.isKeyPressed(Input.Keys.F) && canreleaseball) {
 			int ballamount = 0;
 			if (playerpower == 0)
@@ -370,6 +377,7 @@ public class GameScreenMulti implements Screen {
 				myballs.add(ball);
 			}
 
+			//socket data to send when player shoots
 			JSONObject data = new JSONObject();
 			data.put("event", new JSONString("shootmyball"));
 			data.put("id", new JSONString(myid));
@@ -384,9 +392,12 @@ public class GameScreenMulti implements Screen {
 			spawnprot = -1;
 			ballsize = 8;
 		}
+
+		//shoot release
 		if (Gdx.input.isKeyJustPressed(Input.Keys.F) && !canreleaseball) {
 			canreleaseball = true;
 		}
+
 		// bumping
 		if (MovementMath.overlaps(player, player2) && (Math.abs(dashvel.x) + Math.abs(dashvel.y) + Math.abs(dashvel2x) + Math.abs(dashvel2y) < 50)) {
 			Vector3 bumpvel1 = MovementMath.lengthDir(MovementMath.pointDir(new Vector3(0, 0, 0), new Vector3(xadd, yadd, 0)), 200f);
@@ -411,11 +422,7 @@ public class GameScreenMulti implements Screen {
 			}
 		}
 
-
-		//socket movement
-		//new Timer().scheduleAtFixedRate(new TimerTask(){
-		//@Override
-		//public void run(){
+		//socket data to send to server about player
 		JSONObject data = new JSONObject();
 		data.put("event", new JSONString("playermove"));
 		data.put("x", new JSONString(player.x + ""));
@@ -436,29 +443,9 @@ public class GameScreenMulti implements Screen {
 			data.put("ballsize", new JSONString(ballsize + ""));
 		else
 			data.put("ballsize", new JSONString((-1f) + ""));
-		//data.add("mytime", Gdx.graphics.getDeltaTime());
 		data.put("room", new JSONString(game.myroom));
-		//mystring = myid;
-		//data.put("event",new JSONString("updateTiles"));
+
 		socket.send(JsonUtils.stringify(data.getJavaScriptObject()));
-		//}
-		//},(long)100,(long)1000);
-		//new Timer().scheduleAtFixedRate(new TimerTask(){
-		//@Override
-		//public void run(){
-
-		//Array<String> data = new Array<>();
-		/*
-		JSONObject data2 = new JSONObject();
-		data2.put("event",new JSONString("updateTiles"));
-		data2.put("room",new JSONString(game.myroom));
-		data2.put("id", new JSONString(myid));
-		data2.put("otherid", new JSONString(otherid));
-		socket.send(JsonUtils.stringify(data2.getJavaScriptObject()));
-		*/
-		//}
-		//},(long)100,(long)1000);
-
 
 		// cam
 		float camdis = MovementMath.pointDis(cam.position, new Vector3(player.x + player.radius, player.y + player.radius, 0));
@@ -469,12 +456,16 @@ public class GameScreenMulti implements Screen {
 	}
 
 	@Override
+	//render images
 	public void render(float delta) {
-
+		//clear screen
 		ScreenUtils.clear(0, 0, 0, 1);
-		if (start) {
+		if (start&&!disconnected) {
+			//this creates players on teh first frame after it connects to the server
 			if (!createdplayers) {
 				createdplayers = true;
+
+				//defines colors
 				if (mycolor.equals("red")) {
 					player.setPosition(spawn1.x - 32, spawn1.y - 32);
 					playerTexture = new Texture(Gdx.files.internal("redplayer.png"));
@@ -499,9 +490,14 @@ public class GameScreenMulti implements Screen {
 				cam.setToOrtho(false, 704, 448);
 				cam.position.set(player.x + player.radius, player.y + player.radius, 0);
 			}
+
+			//movement
 			handleInput();
 
+			//updates cam pos
 			cam.update();
+
+			//power times
 			if (playerpowercooldown != -1) {
 				playerpowercooldown -= Gdx.graphics.getDeltaTime() * 10;
 				if (playerpowercooldown <= -1) {
@@ -509,9 +505,12 @@ public class GameScreenMulti implements Screen {
 					playerpowercooldown = -1;
 				}
 			}
-
 			batch.setProjectionMatrix(cam.combined);
+
+			//drawing sprites
 			batch.begin();
+
+			//checks tile collisions with player
 			for (int i = 0; i < tilerects.length; i++) {
 				batch.draw(tiletexture, tilerects[i].x, tilerects[i].y, tilerects[i].width, tilerects[i].height);
 				tilecol[i] = false;
@@ -523,6 +522,8 @@ public class GameScreenMulti implements Screen {
 					tilecol2[i] = true;
 				}
 			}
+
+			//checks power-player collisions
 			for (Iterator<Power> iter = poweruparray.iterator(); iter.hasNext(); ) {
 				Power powerhit = iter.next();
 				powerhit.powersprite.setPosition(powerhit.hitbox.x, powerhit.hitbox.y);
@@ -536,6 +537,8 @@ public class GameScreenMulti implements Screen {
 					powerhit.powersprite.draw(batch);
 				}
 			}
+
+			//player-ball collisions
 			for (Iterator<Ball> iter = blueballs.iterator(); iter.hasNext(); ) {
 				Ball curball = iter.next();
 				Vector3 pastcirc = new Vector3(curball.circ.x, curball.circ.y, 0);
@@ -568,6 +571,8 @@ public class GameScreenMulti implements Screen {
 					curball.ballsprite.draw(batch);
 				}
 			}
+
+			//kills player if not touching the ground
 			if (!searchBoolArray(tilecol, true)) {
 				points2++;
 				ballsize = 8;
@@ -594,6 +599,8 @@ public class GameScreenMulti implements Screen {
 				data.put("otherid", new JSONString(otherid));
 				socket.send(JsonUtils.stringify(data.getJavaScriptObject()));
 			}
+
+			//draws player based on if they spawned recently
 			if (spawnprot <= 0)
 				playerSprite.draw(batch, 1);
 			else
@@ -602,6 +609,8 @@ public class GameScreenMulti implements Screen {
 				playerSprite2.draw(batch, 1);
 			else
 				playerSprite2.draw(batch, 0.75f);
+
+			//decrements
 			if (dashcooldown > 0) {
 				dashcooldown -= Gdx.graphics.getDeltaTime() * 10;
 			}
@@ -615,6 +624,7 @@ public class GameScreenMulti implements Screen {
 				playerpowercooldown = -1;
 			}
 
+			//changes ball sized based on if holding down shoot button
 			if (canreleaseball) {
 				if (ballsize < 80)
 					ballsize += Gdx.graphics.getDeltaTime() * 10;
@@ -624,6 +634,8 @@ public class GameScreenMulti implements Screen {
 				else
 					batch.draw(balltext2, player.x + ballpos.x + playerSprite.getWidth() / 2 - ballsize / 2, player.y + ballpos.y + playerSprite.getHeight() / 2 - ballsize / 2, ballsize, ballsize);
 			}
+
+			//draws players balls based on their sizes
 			if (ballsize2 != -1) {
 				Vector3 ballpos = MovementMath.lengthDir(playerrot2, 40f);
 				if (mycolor.equals("red"))
@@ -631,6 +643,8 @@ public class GameScreenMulti implements Screen {
 				else
 					batch.draw(balltext, player2.x + ballpos.x + playerSprite2.getWidth() / 2 - ballsize2 / 2, player2.y + ballpos.y + playerSprite2.getHeight() / 2 - ballsize2 / 2, ballsize2, ballsize2);
 			}
+
+			//draws player power/dash cooldowns
 			if (playerpowercooldown != -1)
 				game.font.draw(batch, (1 + (int) playerpowercooldown / 4) + "", player.x + 16, player.y + player.radius * 2 + 24);
 			if (dashcooldown > 0)
@@ -638,16 +652,23 @@ public class GameScreenMulti implements Screen {
 
 			batch.end();
 
+			//draws points to game screen
 			game.batch.begin();
 			game.font.draw(game.batch, "Points: " + points, 10, 470);
 			game.font.draw(game.batch, "Opponent Points: " + points2, 440, 470);
-			//debugger for html
-			//game.font.draw(game.batch, mystring + " " + mynum+" "+array, 0, 200);
+			game.batch.end();
+		} else if(disconnected){
+			game.batch.begin();
+			game.font.draw(game.batch, "Player Disconnected", 150, 250);
+			game.batch.end();
+		} else if(!start){
+			game.batch.begin();
+			game.font.draw(game.batch, "Waiting for Second Player...", 150, 250);
 			game.batch.end();
 		}
 	}
 
-	// nessasary overrides
+	//nessecary overrides
 	@Override
 	public void resize(int width, int height) {
 	}
@@ -681,12 +702,16 @@ public class GameScreenMulti implements Screen {
 		//socket.disconnect();
 	}
 
+	//hitbox debugging
+	/*
 	public void drawHitbox(Texture hitbox, Circle circle, SpriteBatch batch) {
 		Sprite hitboxsprite = new Sprite(hitbox);
 		hitboxsprite.setScale(circle.radius / 32);
 		batch.draw(hitboxsprite, circle.x, circle.y);
 	}
+	*/
 
+	//search array for the same value; used to check if player is touching one of all the tiles
 	private boolean searchBoolArray(boolean[] array, boolean search) {
 		for (int i = 0; i < array.length; i++)
 			if (array[i] == search)
@@ -694,6 +719,7 @@ public class GameScreenMulti implements Screen {
 		return false;
 	}
 
+	//ball class (object made when shot)
 	public class Ball {
 		Circle circ = new Circle();
 		float rotation = 0;
@@ -711,6 +737,7 @@ public class GameScreenMulti implements Screen {
 		}
 	}
 
+	//class to make a new power up
 	public class Power {
 		public Sprite powersprite;
 		public int type = -1;

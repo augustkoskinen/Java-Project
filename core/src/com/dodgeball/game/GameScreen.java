@@ -16,23 +16,12 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.Input;
 
-/*
-import com.badlogic.gdx.utils.TimeUtils;
-import com.badlogic.gdx.math.Intersector;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.ApplicationListener;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.audio.Sound;
-import java.lang.Object;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import java.util.Iterator;
-import com.badlogic.gdx.Input.Keys;
-*/
+//=======================>
+//the 1v1 game
+//=======================>
 
 public class GameScreen implements Screen {
+	//vars and objects
 	static final int WORLD_WIDTH = 1108;
 	static final int WORLD_HEIGHT = 1108;
 	static final float SPEED = 200f;
@@ -94,8 +83,13 @@ public class GameScreen implements Screen {
 	private Vector3 spawn3 = new Vector3(WORLD_WIDTH - 162, WORLD_HEIGHT / 2, 0);
 	private Vector3 spawn4 = new Vector3(WORLD_WIDTH / 2, WORLD_HEIGHT - 162, 0);
 
+	//creates basic variables
 	public GameScreen(final DodgeballGame game) {
 		this.game = game;
+
+		//makes tiles/sprites
+		tiletexture = new Texture("Tiles.png");
+
 		for (int i = 0; i < tilecol.length; i++) {
 			tilerects[i] = new Rectangle();
 			tilerects[i].setWidth(196);
@@ -106,7 +100,8 @@ public class GameScreen implements Screen {
 		}
 		batch = new SpriteBatch();
 
-		tiletexture = new Texture("Tiles.png");
+
+		//sets up players
 
 		// p1 setup
 		playerTexture = new Texture(Gdx.files.internal("redplayer.png"));
@@ -131,8 +126,10 @@ public class GameScreen implements Screen {
 		// cam setup
 		cam = new OrthographicCamera();
 		cam.setToOrtho(false, 704, 448);
-		cam.position.set(MovementMath.midpoint(new Vector3(player.x + player.radius, player.y + player.radius, 0),
-				new Vector3(player2.x + player.radius, player2.y + player.radius, 0)));
+		cam.position.set(MovementMath.midpoint(
+				new Vector3(player.x + player.radius, player.y + player.radius, 0),
+				new Vector3(player2.x + player.radius, player2.y + player.radius, 0))
+		);
 	}
 
 	private void handleInput() {
@@ -141,29 +138,36 @@ public class GameScreen implements Screen {
 		Vector3 moveMag = new Vector3(0, 0, 0);
 		float xadd = 0;
 		float yadd = 0;
+		//movement
 		if (moveVect.x != 0 || moveVect.y != 0) {
 			playerrot = MovementMath.pointDir(new Vector3(0, 0, 0), moveVect);
 			moveMag = MovementMath.lengthDir(playerrot, 1);
 			xadd = moveMag.x * SPEED * Gdx.graphics.getDeltaTime();
 			yadd = moveMag.y * SPEED * Gdx.graphics.getDeltaTime();
 		}
+
+		//dash
 		if (Gdx.input.isKeyJustPressed(Input.Keys.G) && dashcooldown <= 0 && (moveVect.x != 0 || moveVect.y != 0)) {
 			System.out.println(Gdx.graphics.getDeltaTime());
 			dashvel = new Vector3(moveMag.x * DASHSPEED, moveMag.y * DASHSPEED, 0);
 			dashcooldown = 20;
 		}
 
+		//limits
 		kb.x *= 0.8f;
 		kb.y *= 0.8f;
 		dashvel.x *= 0.8f;
 		dashvel.y *= 0.8f;
 
+		//actual visible movement
 		player.x += xadd + kb.x * Gdx.graphics.getDeltaTime() + dashvel.x * Gdx.graphics.getDeltaTime();
 		player.y += yadd + kb.y * Gdx.graphics.getDeltaTime() + dashvel.y * Gdx.graphics.getDeltaTime();
 		if (moveVect.x != 0 || moveVect.y != 0) {
 			playerSprite.setRotation((float) Math.toDegrees((float) playerrot));
 		}
 		playerSprite.setPosition(player.x, player.y);
+
+		//shooting
 		if (!Gdx.input.isKeyPressed(Input.Keys.F) && canreleaseball) {
 			canreleaseball = false;
 			Ball ball = new Ball();
@@ -205,6 +209,8 @@ public class GameScreen implements Screen {
 			spawnprot = -1;
 			ballsize = 8;
 		}
+
+		//releasing shoot
 		if (Gdx.input.isKeyJustPressed(Input.Keys.F) && !canreleaseball) {
 			canreleaseball = true;
 		}
@@ -214,29 +220,37 @@ public class GameScreen implements Screen {
 		Vector3 moveMag2 = new Vector3(0, 0, 0);
 		float xadd2 = 0;
 		float yadd2 = 0;
+
+		//moving
 		if (moveVect2.x != 0 || moveVect2.y != 0) {
 			playerrot2 = MovementMath.pointDir(new Vector3(0, 0, 0), moveVect2);
 			moveMag2 = MovementMath.lengthDir(playerrot2, 1);
 			xadd2 = moveMag2.x * SPEED2 * Gdx.graphics.getDeltaTime();
 			yadd2 = moveMag2.y * SPEED2 * Gdx.graphics.getDeltaTime();
 		}
+
+		//dash
 		if (Gdx.input.isKeyJustPressed(Input.Keys.RIGHT_BRACKET) && dashcooldown2 <= 0
 				&& (moveVect2.x != 0 || moveVect2.y != 0)) {
 			dashvel2 = new Vector3(moveMag2.x * DASHSPEED2, moveMag2.y * DASHSPEED2, 0);
 			dashcooldown2 = 20;
 		}
 
+		//limits
 		kb2.x *= 0.8f;
 		kb2.y *= 0.8f;
 		dashvel2.x *= 0.8f;
 		dashvel2.y *= 0.8f;
 
+		//visible movement
 		player2.x += xadd2 + kb2.x * Gdx.graphics.getDeltaTime() + dashvel2.x * Gdx.graphics.getDeltaTime();
 		player2.y += yadd2 + kb2.y * Gdx.graphics.getDeltaTime() + dashvel2.y * Gdx.graphics.getDeltaTime();
 		if (moveVect2.x != 0 || moveVect2.y != 0) {
 			playerSprite2.setRotation((float) Math.toDegrees((float) playerrot2));
 		}
 		playerSprite2.setPosition(player2.x, player2.y);
+
+		//shooting
 		if (!Gdx.input.isKeyPressed(Input.Keys.APOSTROPHE) && canreleaseball2) {
 			canreleaseball2 = false;
 			Ball ball2 = new Ball();
@@ -280,6 +294,7 @@ public class GameScreen implements Screen {
 			ballsize2 = 8;
 		}
 
+		//releasing shoot
 		if (Gdx.input.isKeyJustPressed(Input.Keys.APOSTROPHE) && !canreleaseball2) {
 			canreleaseball2 = true;
 		}
@@ -313,24 +328,32 @@ public class GameScreen implements Screen {
 		}
 
 		// cam
-		Vector3 cammp = MovementMath.midpoint(new Vector3(player.x + player.radius, player.y + player.radius, 0),
-				new Vector3(player2.x + player.radius, player2.y + player.radius, 0));
+		Vector3 cammp = MovementMath.midpoint(
+			new Vector3(player.x + player.radius, player.y + player.radius, 0),
+			new Vector3(player2.x + player.radius, player2.y + player.radius, 0)
+		);
 		float camdis = MovementMath.pointDis(cam.position, cammp);
 		float camdir = MovementMath.pointDir(cam.position, cammp);
 		Vector3 campos = MovementMath.lengthDir(camdir, camdis);
 		cam.position.set(cam.position.x + campos.x * .05f, cam.position.y + campos.y * .05f, 0);
-		cam.zoom = Math.max(1.5f,
-				MovementMath.pointDis(new Vector3(player.x, player.y, 0), new Vector3(player2.x, player2.y, 0)) / 352);
+		cam.zoom = Math.max(1.5f, MovementMath.pointDis(
+			new Vector3(player.x, player.y, 0),
+			new Vector3(player2.x, player2.y, 0)) / 352
+		);
 	}
 
 	@Override
 	public void render(float delta) {
+		//clears screen
 		ScreenUtils.clear(0, 0, 0, 1);
 
+		//does all movement stuff up there ^^^
 		handleInput();
 
+		//updates cam position
 		cam.update();
 
+		//shrinks tiles every now and then
 		if (tilerects[rantile].width <= 0) {
 			rantile = random.nextInt(25);
 		} else if (rantile != -1) {
@@ -342,6 +365,8 @@ public class GameScreen implements Screen {
 				tilerects[rantile].y += changefactor / 2;
 			}
 		}
+
+		//makes powers every now and then
 		if (random.nextInt(1500 * (int) (1 + Math.abs(Gdx.graphics.getDeltaTime()))) == 0) {
 			Power power = new Power();
 			power.type = (int) Math.random() % 5;
@@ -366,6 +391,8 @@ public class GameScreen implements Screen {
 			power.asignType(0);
 			poweruparray.add(power);
 		}
+
+		//powerup times
 		if (playerpowercooldown != -1) {
 			playerpowercooldown -= Gdx.graphics.getDeltaTime() * 10;
 			if (playerpowercooldown <= -1) {
@@ -381,8 +408,11 @@ public class GameScreen implements Screen {
 			}
 		}
 
+		//starting the sprite batch
 		batch.setProjectionMatrix(cam.combined);
 		batch.begin();
+
+		//checking player collisions w/ tiles
 		for (int i = 0; i < tilerects.length; i++) {
 			batch.draw(tiletexture, tilerects[i].x, tilerects[i].y, tilerects[i].width, tilerects[i].height);
 			tilecol[i] = false;
@@ -394,6 +424,8 @@ public class GameScreen implements Screen {
 				tilecol2[i] = true;
 			}
 		}
+
+		//checking for player-power collisions
 		for (Iterator<Power> iter = poweruparray.iterator(); iter.hasNext();) {
 			Power powerhit = iter.next();
 			powerhit.powersprite.setPosition(powerhit.hitbox.x, powerhit.hitbox.y);
@@ -410,6 +442,7 @@ public class GameScreen implements Screen {
 			}
 		}
 
+		//checking for ball-player collisions
 		for (Iterator<Ball> iter = redballs.iterator(); iter.hasNext();) {
 			Ball curball = iter.next();
 			Vector3 pastcirc = new Vector3(curball.circ.x, curball.circ.y, 0);
@@ -448,6 +481,8 @@ public class GameScreen implements Screen {
 				curball.ballsprite.draw(batch);
 			}
 		}
+
+		//kills players if not touching the ground
 		if (!searchBoolArray(tilecol, true)) {
 			points2++;
 			ballsize = 8;
@@ -490,6 +525,8 @@ public class GameScreen implements Screen {
 			tilecol2[0] = true;
 			player2.setPosition(WORLD_WIDTH / 2 - 32, WORLD_HEIGHT / 2 - 32);
 		}
+
+		//drawing the players based on if they recently spawned in
 		if (spawnprot <= 0)
 			playerSprite.draw(batch, 1);
 		else
@@ -501,6 +538,8 @@ public class GameScreen implements Screen {
 		if (dashcooldown > 0) {
 			dashcooldown -= Gdx.graphics.getDeltaTime() * 10;
 		}
+
+		//decrementers
 		if (dashcooldown2 > 0) {
 			dashcooldown2 -= Gdx.graphics.getDeltaTime() * 10;
 		}
@@ -523,6 +562,7 @@ public class GameScreen implements Screen {
 			playerpowercooldown2 = -1;
 		}
 
+		//grows ball sizes for the players if hold them down
 		if (canreleaseball) {
 			if (ballsize < 80)
 				ballsize += Gdx.graphics.getDeltaTime() * 10;
@@ -537,6 +577,8 @@ public class GameScreen implements Screen {
 			batch.draw(balltext2, player2.x + ballpos2.x + playerSprite2.getWidth() / 2 - ballsize2 / 2,
 					player2.y + ballpos2.y + playerSprite2.getHeight() / 2 - ballsize2 / 2, ballsize2, ballsize2);
 		}
+
+		//printing the cooldowns for dash/powers next to the players
 		if (playerpowercooldown != -1)
 			game.font.draw(batch, (1 + (int) playerpowercooldown / 4) + "", player.x + 16,
 					player.y + player.radius * 2 + 24);
@@ -549,13 +591,14 @@ public class GameScreen implements Screen {
 			game.font.draw(batch, "" + (1 + (int) dashcooldown2 / 4), player2.x + 24, player2.y);
 		batch.end();
 
+		//draws points
 		game.batch.begin();
 		game.font.draw(game.batch, "Player1 Points: " + points, 10, 470);
 		game.font.draw(game.batch, "Player2 Points: " + points2, 470, 470);
 		game.batch.end();
 	}
 
-	// nessasary overrides
+	// necessary overrides
 	@Override
 	public void resize(int width, int height) {
 	}
