@@ -298,6 +298,7 @@ public class GameScreen implements Screen {
 		if (Gdx.input.isKeyJustPressed(Input.Keys.APOSTROPHE) && !canreleaseball2) {
 			canreleaseball2 = true;
 		}
+
 		// bumping
 		if (MovementMath.overlaps(player, player2)
 				&& (Math.abs(dashvel.x) + Math.abs(dashvel.y) + Math.abs(dashvel2.x) + Math.abs(dashvel2.y) < 50)) {

@@ -1,6 +1,5 @@
 import { WebSocketServer } from 'ws';
 
-
 //vars/initialization
 const wss = new WebSocketServer({ port: 8080 });
 let clients= []

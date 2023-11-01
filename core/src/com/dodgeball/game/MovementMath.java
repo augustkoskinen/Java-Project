@@ -8,6 +8,8 @@ import com.badlogic.gdx.math.Circle;
 
 public class MovementMath {
     //trig
+
+    //float cos functions
     public static float cosf(float f){
         return (float) Math.cos(f);
     }
@@ -16,20 +18,28 @@ public class MovementMath {
     }
 
     //simple trig
+
+    //gets position based on direction and magnitude
     static public Vector3 lengthDir(float direction, float length){
         return new Vector3(MovementMath.cosf(direction)*length,MovementMath.sinf(direction)*length,0);
     }
+
+    //gets dir between points
     static public float pointDir(Vector3 pointa, Vector3 pointb){
         return (float) Math.atan2((pointb.y-pointa.y),(pointb.x-pointa.x));
     }
+
+    //gets dist between points
     static public float pointDis(Vector3 pointa, Vector3 pointb){
         return (float) Math.sqrt(Math.pow(pointb.y-pointa.y,2)+Math.pow(pointb.x-pointa.x,2));
     }
+
+    //gets mp of two points
     static public Vector3 midpoint(Vector3 pointa, Vector3 pointb){
         return new Vector3((pointa.x+pointb.x)/2,(pointa.y+pointb.y)/2,0);
     }
 
-    //input
+    //gets vector based on inputs
     static public Vector3 InputDir(int preset){
         Vector3 dir = new Vector3(0, 0, 0);
         switch(preset){
@@ -67,6 +77,7 @@ public class MovementMath {
         return dir;
     }
 
+    //checks an overlap between a circle and a rectangle
     static public boolean overlaps(Circle circ, Rectangle rect){
         if(rect.width+rect.height<=0){
             return false;
@@ -82,15 +93,18 @@ public class MovementMath {
         return (cornerdist <= Math.pow(circ.radius,2));
     }
 
+    //checks an overlap between 2 circles
     static public boolean overlaps(Circle circ, Circle circ2){
         return (pointDis(new Vector3(circ.x+circ.radius, circ.y+circ.radius, 0),new Vector3(circ2.x+circ2.radius, circ2.y+circ2.radius, 0))<circ.radius+circ2.radius);
     }
 
+    //gets the slope of two points
     static public Vector3 getSlope(Vector3 pointa, Vector3 pointb){
         Vector3 slope = new Vector3(pointa.x-pointb.x, pointa.y-pointb.y, 0);
         return slope;
     }
-    
+
+    //checks if there's a circle between two points
     static public boolean lineCol(Vector3 pointa, Vector3 pointb, Circle circ){
         float rate = 10;
         float dist = pointDis(pointa, pointb);
