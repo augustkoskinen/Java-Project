@@ -21,9 +21,11 @@ public class MainMenuScreen implements Screen {
 	private Texture buttononline;
 
 	OrthographicCamera camera;
+	String launcher = "";
 
-	public MainMenuScreen(final DodgeballGame game) {
+	public MainMenuScreen(final DodgeballGame game,String gamelauncher) {
 		this.game = game;
+		launcher = gamelauncher;
 		introtext = new Texture("title.png");
 		button1v1 = new Texture("1v1button.png");
 		buttononline = new Texture("onlinebutton.png");
@@ -49,7 +51,10 @@ public class MainMenuScreen implements Screen {
 			game.setScreen(new GameScreen(game));
 			dispose();
 		} else if (Gdx.input.isTouched() && MovementMath.pointDis(new Vector3(600f*(Gdx.graphics.getWidth()/800f),304f*(Gdx.graphics.getHeight()/480f),0f),new Vector3(Gdx.input.getX(),Gdx.input.getY(),0f))<48f*(Gdx.graphics.getWidth()/800f)) {
-			game.setScreen(new GameScreenMulti(game));
+			if(launcher.equals("html"))
+				game.setScreen(new GameScreenMulti(game));
+			else if(launcher.equals("desktop"))
+				game.setScreen(new GameScreenMulti(game));
 			dispose();
 		}
 	}

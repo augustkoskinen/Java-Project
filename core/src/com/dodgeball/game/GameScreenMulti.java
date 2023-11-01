@@ -5,10 +5,15 @@ import java.io.*;
 import java.net.*;
 //import com.google.gwt.json.client.*;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsonUtils;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
+import com.google.gwt.json.client.JSONArray;
+import java.lang.String.*;
+import java.lang.Integer.*;
+import java.lang.Float.*;
 import com.google.gwt.json.client.JSONValue;
 
 import com.badlogic.gdx.utils.*;
@@ -29,6 +34,8 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.Input;
 
+import static java.lang.Float.parseFloat;
+
 /*
 import com.badlogic.gdx.utils.TimeUtils;
 import com.badlogic.gdx.math.Intersector;
@@ -47,14 +54,15 @@ import com.badlogic.gdx.Input.Keys;
 
 public class GameScreenMulti implements Screen {
 	private WebSocket socket;
+	private int array;
 	private String mystring = "";
+	private float mynum = 0;
 	private boolean start = false;
 	private String mycolor = "red";
 	private String myid = "";
 	private String otherid = "";
-	private String id = "";
 	private boolean createdplayers = false;
-	
+
 	static final int WORLD_WIDTH = 1108;
 	static final int WORLD_HEIGHT = 1108;
 	static final float SPEED = 200f;
@@ -117,19 +125,19 @@ public class GameScreenMulti implements Screen {
 	private Vector3 spawn3 = new Vector3(WORLD_WIDTH - 162, WORLD_HEIGHT / 2, 0);
 	private Vector3 spawn4 = new Vector3(WORLD_WIDTH / 2, WORLD_HEIGHT - 162, 0);
 
-	public WebSocket configSocket(){
-		WebSocket holdsocket = WebSockets.newSocket(WebSockets.toWebSocketUrl("127.0.0.1", 8080));//game.ejenda.org 127.0.0.1
+	public WebSocket configSocket() {
+		WebSocket holdsocket = WebSockets.newSocket(WebSockets.toWebSocketUrl("game2.ejenda.org", 80));//game.ejenda.org:80 127.0.0.1:8080
 		holdsocket.setSendGracefully(true);
 		holdsocket.addListener(new WebSocketListener() {
 			@Override
 			public boolean onOpen(WebSocket webSocket) {
-				Gdx.app.log("Log","Open");
+				Gdx.app.log("Log", "Open");
 				return false;
 			}
 
 			@Override
 			public boolean onClose(WebSocket webSocket, int closeCode, String reason) {
-				Gdx.app.log("Log","Close");
+				Gdx.app.log("Log", "Close");
 				return false;
 			}
 
@@ -137,100 +145,109 @@ public class GameScreenMulti implements Screen {
 			public boolean onMessage(WebSocket webSocket, String packet) {
 				//Gdx.app.log("Log","hiiii");//good luck charm; dont touch
 				JSONObject data = JSONParser.parse(packet).isObject();
-				String event =data.get("event").isString().stringValue();
-				Gdx.app.log("Log","Packet Message: "+data);
-				if(event.equals("socketID")) {
+				String event = data.get("event").isString().stringValue();
+				//mystring = event;
+				//Gdx.app.debug("MyTag", "my debug message");
+				Gdx.app.log("Log", "Packet Message: " + data);
+				if (event.equals("socketID")) {
 					myid = data.get("id").isString().stringValue();
 					game.myroom = data.get("room").isString().stringValue();
 					Gdx.app.log("Websocket", "My ID: " + myid);
 				}
-				if(event.equals("getPlayers")) {
+				if (event.equals("getPlayers")) {
 					otherid = data.get("otherid").isString().stringValue();
 					mycolor = data.get("color").isString().stringValue();
 					Gdx.app.log("Websocket", "Other ID: " + otherid);
 				}
-				if(event.equals("disconnecting")) {
+				if (event.equals("disconnecting")) {
 					start = false;
 					socket.close();
 				}
-				if(event.equals("startGame")) {
+				if (event.equals("startGame")) {
 					//other vars
 					start = true;
-					int seed = (int)data.get("seed").isNumber().doubleValue();
+					int seed = (int) data.get("seed").isNumber().doubleValue();
 					random = new Random(seed);
 					rantile = random.nextInt(25);
-					//mystring = "here";//data.get("id").isString().stringValue();
 				}
-				if(event.equals("movement")) {
-					float x =(float) data.get("x").isNumber().doubleValue();
-					float y = (float) data.get("y").isNumber().doubleValue();
-					spawnprot2 = (float) data.get("spawnprot2").isNumber().doubleValue();
-					moveVectx = (float) data.get("moveVectx").isNumber().doubleValue();
-					moveVecty = (float) data.get("moveVecty").isNumber().doubleValue();
-					dashvel2x = (float) data.get("dashvelx").isNumber().doubleValue();
-					dashvel2y = (float) data.get("dashvely").isNumber().doubleValue();
-					ballsize2 = (float) data.get("ballsize").isNumber().doubleValue();
-					player2.setPosition(x,y);
-					playerrot2 = (float) data.get("rotation").isNumber().doubleValue();
-					kb.x+= (float) data.get("kbaddx").isNumber().doubleValue();
-					kb.y+= (float) data.get("kbaddy").isNumber().doubleValue();
-					xadd2 = (float) data.get("xadd2").isNumber().doubleValue();
-					yadd2 = (float) data.get("yadd2").isNumber().doubleValue();
+
+				if (event.equals("movement")) {
+					if (data.get("id").isString().stringValue().equals(myid)) {
+						parseFloat(data.get("x").isString().stringValue());
+
+						float x = parseFloat(data.get("x").isString().stringValue());
+						float y = parseFloat(data.get("y").isString().stringValue());
+						player2.setPosition(x, y);
+
+						spawnprot2 = parseFloat(data.get("spawnprot2").isString().stringValue());
+						moveVectx = parseFloat(data.get("moveVectx").isString().stringValue());
+						moveVecty = parseFloat(data.get("moveVecty").isString().stringValue());
+						dashvel2x = parseFloat(data.get("dashvelx").isString().stringValue());
+						dashvel2y = parseFloat(data.get("dashvely").isString().stringValue());
+						ballsize2 = parseFloat(data.get("ballsize").isString().stringValue());
+						playerrot2 = parseFloat(data.get("rotation").isString().stringValue());
+						kb.x += parseFloat(data.get("kbaddx").isString().stringValue());
+						kb.y += parseFloat(data.get("kbaddy").isString().stringValue());
+						xadd2 = parseFloat(data.get("xadd2").isString().stringValue());
+						yadd2 = parseFloat(data.get("yadd2").isString().stringValue());
+					}
+					for (int i = 0; i < 25; i++) {
+						JSONObject curRect = data.get("jstilerects").isArray().get(i).isObject();
+						tilerects[i].width = (float) curRect.get("width").isNumber().doubleValue();
+						tilerects[i].height = (float) curRect.get("height").isNumber().doubleValue();
+						tilerects[i].setPosition((float)(curRect.get("x").isNumber().doubleValue()), (float)(curRect.get("y").isNumber().doubleValue()));
+					}
 				}
-				if(event.equals("shootBullet")) {
-					if (data.get("id").isString().stringValue().equals(otherid)){
-						int ballamount = (int)data.get("ballcount").isNumber().doubleValue();
-						float ballsize = (float)data.get("ballsize").isNumber().doubleValue();
+				if (event.equals("shootBullet")) {
+					parseFloat(data.get("ballsize").isString().stringValue());
+					if (data.get("id").isString().stringValue().equals(otherid)) {
+						int ballamount = (int) parseFloat(data.get("ballcount").isString().stringValue());
+						float ballsize = parseFloat(data.get("ballsize").isString().stringValue());
 						int mult = 0;
-						for (int i = 0; i<ballamount;i++){
-							if(i==1){
+						for (int i = 0; i < ballamount; i++) {
+							if (i == 1) {
 								mult = 1;
-							} else if(i==2){
+							} else if (i == 2) {
 								mult = -1;
 							}
 							Ball ball = new Ball();
 							ball.rotation = playerrot2;
 							ball.changeColor(data.get("color").isString().stringValue());
-							Vector3 ballpos = MovementMath.lengthDir(playerrot2+0.349066f*mult, 40f);
-							Vector3 ballvel = MovementMath.lengthDir(playerrot2+0.349066f*mult, ballsize * 80 + 50f);
+							Vector3 ballpos = MovementMath.lengthDir(playerrot2 + 0.349066f * mult, 40f);
+							Vector3 ballvel = MovementMath.lengthDir(playerrot2 + 0.349066f * mult, ballsize * 80 + 50f);
 							ball.circ.setPosition(player2.x + ballpos.x + 28, player2.y + ballpos.y + 28);
 							ball.velocity = ballvel;
-							ball.ballsprite.setRotation(playerrot2+0.349066f*mult);
+							ball.ballsprite.setRotation(playerrot2 + 0.349066f * mult);
 							ball.ballsprite.setScale(ballsize / 8);
 							ball.circ.radius = ballsize / 2;
 							blueballs.add(ball);
 						}
 					}
 				}
-				if( event.equals("updatePoints")) {
+				if (event.equals("updatePoints")) {
+					parseFloat(data.get("ran").isString().stringValue());
 					points++;
 					ballsize = 8;
 					ballsize2 = 8;
-					ran = (int)data.get("ran").isNumber().doubleValue();
+					ran = (int) parseFloat(data.get("ran").isString().stringValue());
 					kb = new Vector3(0, 0, 0);
 					spawnprot2 = 40.0f;
 					for (int i = 0; i < tilecol.length; i++) {
 						tilerects[i].setWidth(196);
 						tilerects[i].setHeight(196);
 						tilerects[i].setPosition((((i % 5) * 196) + 64), (float) (Math.floor(i / 5f) * 196 + 64));
-						rantile = (int)data.get("rantile").isNumber().doubleValue();
+						rantile = (int) parseFloat(data.get("rantile").isString().stringValue());
 						rantilerespawn = -1;
 					}
 					tilecol[0] = true;
 					tilecol2[0] = true;
 					player2.setPosition(WORLD_WIDTH / 2 - 32, WORLD_HEIGHT / 2 - 32);
+					//mystring = "here";
 				}
-				if(event.equals( "setTiles")){
-					for(int i = 0; i < 25; i++){
-						tilerects[i].width =(float) data.get("jstilerects").isArray().get(i).isObject().get("width").isNumber().doubleValue();
-						tilerects[i].height =(float) data.get("jstilerects").isArray().get(i).isObject().get("height").isNumber().doubleValue();
-						tilerects[i].setPosition((float) data.get("jstilerects").isArray().get(i).isObject().get("x").isNumber().doubleValue(),(float) data.get("jstilerects").isArray().get(i).isObject().get("y").isNumber().doubleValue());
-					}
-				}
-				if( event.equals("makePower")){
+				if (event.equals("makePower")) {
 					Power power = new Power();
-					power.type = (int) (Math.random() * 5);
-					switch ((int)data.get("randpos").isNumber().doubleValue()) {
+					//power.type = (int) (Math.random() * 5);
+					switch ((int) data.get("randpos").isNumber().doubleValue()) {
 						case 0: {
 							power.assignCircleValues(24, new Vector3(spawn1.x - 32, spawn1.y - 32, 0));
 							break;
@@ -256,13 +273,13 @@ public class GameScreenMulti implements Screen {
 
 			@Override
 			public boolean onMessage(WebSocket webSocket, byte[] packet) {
-				Gdx.app.log("Log","Byte Message: ");
+				Gdx.app.log("Log", "Byte Message: ");
 				return false;
 			}
 
 			@Override
 			public boolean onError(WebSocket webSocket, Throwable error) {
-				Gdx.app.log("Log","Error");
+				Gdx.app.log("Log", "Error");
 				return false;
 			}
 		});
@@ -313,7 +330,7 @@ public class GameScreenMulti implements Screen {
 
 		kb.x *= 0.8f;
 		kb.y *= 0.8f;
-		kbaddx*= 0.5f;
+		kbaddx *= 0.5f;
 		kbaddy *= 0.5f;
 		dashvel.x *= 0.8f;
 		dashvel.y *= 0.8f;
@@ -329,37 +346,36 @@ public class GameScreenMulti implements Screen {
 		playerSprite2.setRotation((float) Math.toDegrees((float) playerrot2));
 		if (!Gdx.input.isKeyPressed(Input.Keys.F) && canreleaseball) {
 			int ballamount = 0;
-			if(playerpower==0)
+			if (playerpower == 0)
 				ballamount = 3;
 			else
 				ballamount = 1;
 			int mult = 0;
-			for (int i = 0; i<ballamount;i++){
-				if(i==1){
+			for (int i = 0; i < ballamount; i++) {
+				if (i == 1) {
 					mult = 1;
-				} else if(i==2){
+				} else if (i == 2) {
 					mult = -1;
 				}
 				Ball ball = new Ball();
 				ball.rotation = playerrot;
 				ball.changeColor(mycolor);
-				Vector3 ballpos = MovementMath.lengthDir(playerrot+0.349066f*mult, 40f);
-				Vector3 ballvel = MovementMath.lengthDir(playerrot+0.349066f*mult, ballsize * 80 + 50f);
+				Vector3 ballpos = MovementMath.lengthDir(playerrot + 0.349066f * mult, 40f);
+				Vector3 ballvel = MovementMath.lengthDir(playerrot + 0.349066f * mult, ballsize * 80 + 50f);
 				ball.circ.setPosition(player.x + ballpos.x + 28, player.y + ballpos.y + 28);
 				ball.velocity = ballvel;
-				ball.ballsprite.setRotation(playerrot+0.349066f*mult);
+				ball.ballsprite.setRotation(playerrot + 0.349066f * mult);
 				ball.ballsprite.setScale(ballsize / 8);
 				ball.circ.radius = ballsize / 2;
 				myballs.add(ball);
 			}
 
 			JSONObject data = new JSONObject();
-			data.put("event",new JSONString("shootmyball"));
 			data.put("event", new JSONString("shootmyball"));
 			data.put("id", new JSONString(myid));
 			data.put("otherid", new JSONString(otherid));
-			data.put("ballcount", new JSONString(ballamount+""));
-			data.put("ballsize", new JSONString(ballsize+""));
+			data.put("ballcount", new JSONString(ballamount + ""));
+			data.put("ballsize", new JSONString(ballsize + ""));
 			data.put("color", new JSONString(mycolor));
 			data.put("room", new JSONString(game.myroom));
 			socket.send(JsonUtils.stringify(data.getJavaScriptObject()));
@@ -372,11 +388,11 @@ public class GameScreenMulti implements Screen {
 			canreleaseball = true;
 		}
 		// bumping
-		if (MovementMath.overlaps(player, player2)&& (Math.abs(dashvel.x) + Math.abs(dashvel.y) + Math.abs(dashvel2x) + Math.abs(dashvel2y) < 50)) {
-			Vector3 bumpvel1 = MovementMath.lengthDir(MovementMath.pointDir(new Vector3(0, 0, 0), new Vector3(xadd,yadd, 0)), 200f);
-			Vector3 bumpvel2 = MovementMath.lengthDir(MovementMath.pointDir(new Vector3(0, 0, 0), new Vector3(xadd2,yadd2, 0)), 200f);
-			Vector3 bumpvel1flip = MovementMath.lengthDir(MovementMath.pointDir(new Vector3(0, 0, 0), new Vector3(-xadd,-yadd, 0)), 200f);
-			Vector3 bumpvel2flip = MovementMath.lengthDir(MovementMath.pointDir(new Vector3(0, 0, 0), new Vector3(-xadd2,-yadd2, 0)), 200f);
+		if (MovementMath.overlaps(player, player2) && (Math.abs(dashvel.x) + Math.abs(dashvel.y) + Math.abs(dashvel2x) + Math.abs(dashvel2y) < 50)) {
+			Vector3 bumpvel1 = MovementMath.lengthDir(MovementMath.pointDir(new Vector3(0, 0, 0), new Vector3(xadd, yadd, 0)), 200f);
+			Vector3 bumpvel2 = MovementMath.lengthDir(MovementMath.pointDir(new Vector3(0, 0, 0), new Vector3(xadd2, yadd2, 0)), 200f);
+			Vector3 bumpvel1flip = MovementMath.lengthDir(MovementMath.pointDir(new Vector3(0, 0, 0), new Vector3(-xadd, -yadd, 0)), 200f);
+			Vector3 bumpvel2flip = MovementMath.lengthDir(MovementMath.pointDir(new Vector3(0, 0, 0), new Vector3(-xadd2, -yadd2, 0)), 200f);
 			int p1canmove = 1;
 			if (moveVect.x == 0 && moveVect.y == 0) {
 				p1canmove = 0;
@@ -398,53 +414,55 @@ public class GameScreenMulti implements Screen {
 
 		//socket movement
 		//new Timer().scheduleAtFixedRate(new TimerTask(){
-			//@Override
-			//public void run(){
+		//@Override
+		//public void run(){
 		JSONObject data = new JSONObject();
 		data.put("event", new JSONString("playermove"));
-		data.put("x",new JSONString(player.x+""));
-		data.put("y",new JSONString(player.y+""));
-		data.put("rotation",new JSONString(playerrot+""));
-		data.put("xadd2",new JSONString(xadd2+""));
-		data.put("yaddd2",new JSONString(yadd2+""));
-		data.put("moveVectx",new JSONString(moveVectx+""));
-		data.put("moveVecty",new JSONString(moveVecty+""));
-		data.put("kbaddx",new JSONString(kbaddx+""));
-		data.put("kbaddy",new JSONString(kbaddy+""));
-		data.put("dashvelx",new JSONString(dashvel.x+""));
-		data.put("dashvely",new JSONString(dashvel.y+""));
-		data.put("spawnprot",new JSONString(spawnprot+""));
+		data.put("x", new JSONString(player.x + ""));
+		data.put("y", new JSONString(player.y + ""));
+		data.put("rotation", new JSONString(playerrot + ""));
+		data.put("xadd2", new JSONString(xadd2 + ""));
+		data.put("yadd2", new JSONString(yadd2 + ""));
+		data.put("moveVectx", new JSONString(moveVectx + ""));
+		data.put("moveVecty", new JSONString(moveVecty + ""));
+		data.put("kbaddx", new JSONString(kbaddx + ""));
+		data.put("kbaddy", new JSONString(kbaddy + ""));
+		data.put("dashvelx", new JSONString(dashvel.x + ""));
+		data.put("dashvely", new JSONString(dashvel.y + ""));
+		data.put("spawnprot", new JSONString(spawnprot + ""));
 		data.put("id", new JSONString(myid));
 		data.put("otherid", new JSONString(otherid));
-		if(canreleaseball)
-			data.put("ballsize",new JSONString(ballsize+""));
+		if (canreleaseball)
+			data.put("ballsize", new JSONString(ballsize + ""));
 		else
-			data.put("ballsize",new JSONString((-1f)+""));
+			data.put("ballsize", new JSONString((-1f) + ""));
 		//data.add("mytime", Gdx.graphics.getDeltaTime());
-		data.put("room",new JSONString(game.myroom));
-		//mystring = JsonUtils.stringify(data.getJavaScriptObject());
-		mystring = socket.getUrl();
+		data.put("room", new JSONString(game.myroom));
+		//mystring = myid;
+		//data.put("event",new JSONString("updateTiles"));
 		socket.send(JsonUtils.stringify(data.getJavaScriptObject()));
 		//}
 		//},(long)100,(long)1000);
 		//new Timer().scheduleAtFixedRate(new TimerTask(){
-			//@Override
-			//public void run(){
+		//@Override
+		//public void run(){
 
-				//Array<String> data = new Array<>();
+		//Array<String> data = new Array<>();
+		/*
 		JSONObject data2 = new JSONObject();
 		data2.put("event",new JSONString("updateTiles"));
 		data2.put("room",new JSONString(game.myroom));
 		data2.put("id", new JSONString(myid));
 		data2.put("otherid", new JSONString(otherid));
 		socket.send(JsonUtils.stringify(data2.getJavaScriptObject()));
-			//}
+		*/
+		//}
 		//},(long)100,(long)1000);
 
 
 		// cam
-		float camdis = MovementMath.pointDis(cam.position, new Vector3(player.x+player.radius,player.y+player.radius, 0));
-		float camdir = MovementMath.pointDir(cam.position, new Vector3(player.x+player.radius,player.y+player.radius, 0));
+		float camdis = MovementMath.pointDis(cam.position, new Vector3(player.x + player.radius, player.y + player.radius, 0));
+		float camdir = MovementMath.pointDir(cam.position, new Vector3(player.x + player.radius, player.y + player.radius, 0));
 		Vector3 campos = MovementMath.lengthDir(camdir, camdis);
 		cam.position.set(cam.position.x + campos.x * .05f, cam.position.y + campos.y * .05f, 0);
 		cam.zoom = 1.5f;
@@ -454,16 +472,15 @@ public class GameScreenMulti implements Screen {
 	public void render(float delta) {
 
 		ScreenUtils.clear(0, 0, 0, 1);
-		if (start){
-			if(!createdplayers){
+		if (start) {
+			if (!createdplayers) {
 				createdplayers = true;
-				if(mycolor.equals("red")){
-					player.setPosition(spawn1.x-32, spawn1.y-32);
+				if (mycolor.equals("red")) {
+					player.setPosition(spawn1.x - 32, spawn1.y - 32);
 					playerTexture = new Texture(Gdx.files.internal("redplayer.png"));
 					playerTexture2 = new Texture(Gdx.files.internal("blueplayer.png"));
-				}
-				else if(mycolor.equals("blue")){
-					player.setPosition(spawn3.x-32, spawn3.y-32);
+				} else if (mycolor.equals("blue")) {
+					player.setPosition(spawn3.x - 32, spawn3.y - 32);
 					playerTexture = new Texture(Gdx.files.internal("blueplayer.png"));
 					playerTexture2 = new Texture(Gdx.files.internal("redplayer.png"));
 				}
@@ -480,7 +497,7 @@ public class GameScreenMulti implements Screen {
 				// cam setup
 				cam = new OrthographicCamera();
 				cam.setToOrtho(false, 704, 448);
-				cam.position.set(player.x+player.radius,player.y+player.radius,0);
+				cam.position.set(player.x + player.radius, player.y + player.radius, 0);
 			}
 			handleInput();
 
@@ -506,7 +523,7 @@ public class GameScreenMulti implements Screen {
 					tilecol2[i] = true;
 				}
 			}
-			for (Iterator<Power> iter = poweruparray.iterator(); iter.hasNext();) {
+			for (Iterator<Power> iter = poweruparray.iterator(); iter.hasNext(); ) {
 				Power powerhit = iter.next();
 				powerhit.powersprite.setPosition(powerhit.hitbox.x, powerhit.hitbox.y);
 				if (MovementMath.overlaps(player, powerhit.hitbox)) {
@@ -519,7 +536,7 @@ public class GameScreenMulti implements Screen {
 					powerhit.powersprite.draw(batch);
 				}
 			}
-			for (Iterator<Ball> iter = blueballs.iterator(); iter.hasNext();) {
+			for (Iterator<Ball> iter = blueballs.iterator(); iter.hasNext(); ) {
 				Ball curball = iter.next();
 				Vector3 pastcirc = new Vector3(curball.circ.x, curball.circ.y, 0);
 				curball.circ.x += curball.velocity.x * Gdx.graphics.getDeltaTime();
@@ -527,7 +544,7 @@ public class GameScreenMulti implements Screen {
 				curball.ballsprite.setPosition(curball.circ.x, curball.circ.y);
 				if (curball.circ.x < -10 && curball.circ.y < -10 && curball.circ.x > 1120 && curball.circ.x > 1120) {
 					iter.remove();
-				} else if (MovementMath.lineCol(pastcirc, new Vector3(curball.circ.x, curball.circ.y, 0), player)|| MovementMath.overlaps(player, curball.circ)) {
+				} else if (MovementMath.lineCol(pastcirc, new Vector3(curball.circ.x, curball.circ.y, 0), player) || MovementMath.overlaps(player, curball.circ)) {
 					if (spawnprot <= 0) {
 						kb.x += curball.velocity.x * 1.25f;
 						kb.y += curball.velocity.y * 1.25f;
@@ -537,7 +554,7 @@ public class GameScreenMulti implements Screen {
 					curball.ballsprite.draw(batch);
 				}
 			}
-			for (Iterator<Ball> iter = myballs.iterator(); iter.hasNext();) {
+			for (Iterator<Ball> iter = myballs.iterator(); iter.hasNext(); ) {
 				Ball curball = iter.next();
 				Vector3 pastcirc = new Vector3(curball.circ.x, curball.circ.y, 0);
 				curball.circ.x += curball.velocity.x * Gdx.graphics.getDeltaTime();
@@ -545,7 +562,7 @@ public class GameScreenMulti implements Screen {
 				curball.ballsprite.setPosition(curball.circ.x, curball.circ.y);
 				if (curball.circ.x < -10 && curball.circ.y < -10 && curball.circ.x > 1120 && curball.circ.x > 1120) {
 					iter.remove();
-				} else if (MovementMath.lineCol(pastcirc, new Vector3(curball.circ.x, curball.circ.y, 0), player2)|| MovementMath.overlaps(player2, curball.circ)) {
+				} else if (MovementMath.lineCol(pastcirc, new Vector3(curball.circ.x, curball.circ.y, 0), player2) || MovementMath.overlaps(player2, curball.circ)) {
 					iter.remove();
 				} else {
 					curball.ballsprite.draw(batch);
@@ -567,12 +584,12 @@ public class GameScreenMulti implements Screen {
 				}
 				tilecol[0] = true;
 				tilecol2[0] = true;
-				player.setPosition(WORLD_WIDTH / 2 - 32, WORLD_HEIGHT / 2 - 32);
+				player.setPosition(WORLD_WIDTH / 2f - 32, WORLD_HEIGHT / 2f - 32);
 				JSONObject data = new JSONObject();
-				data.put("event",new JSONString("updateserverpoints"));
-				data.put("winnerid",new JSONString(id));
-				data.put("ran",new JSONString(random.nextInt(4)+""));
-				data.put("rantile",new JSONString(random.nextInt(25)+""));
+				data.put("event", new JSONString("updateserverpoints"));
+				data.put("winnerid", new JSONString(otherid));
+				data.put("ran", new JSONString(random.nextInt(4) + ""));
+				data.put("rantile", new JSONString(random.nextInt(25) + ""));
 				data.put("id", new JSONString(myid));
 				data.put("otherid", new JSONString(otherid));
 				socket.send(JsonUtils.stringify(data.getJavaScriptObject()));
@@ -602,29 +619,30 @@ public class GameScreenMulti implements Screen {
 				if (ballsize < 80)
 					ballsize += Gdx.graphics.getDeltaTime() * 10;
 				Vector3 ballpos = MovementMath.lengthDir(playerrot, 40f);
-				if(mycolor.equals("red"))
-					batch.draw(balltext, player.x + ballpos.x + playerSprite.getWidth() / 2 - ballsize / 2,player.y + ballpos.y + playerSprite.getHeight() / 2 - ballsize / 2, ballsize, ballsize);
+				if (mycolor.equals("red"))
+					batch.draw(balltext, player.x + ballpos.x + playerSprite.getWidth() / 2 - ballsize / 2, player.y + ballpos.y + playerSprite.getHeight() / 2 - ballsize / 2, ballsize, ballsize);
 				else
-					batch.draw(balltext2, player.x + ballpos.x + playerSprite.getWidth() / 2 - ballsize / 2,player.y + ballpos.y + playerSprite.getHeight() / 2 - ballsize / 2, ballsize, ballsize);
+					batch.draw(balltext2, player.x + ballpos.x + playerSprite.getWidth() / 2 - ballsize / 2, player.y + ballpos.y + playerSprite.getHeight() / 2 - ballsize / 2, ballsize, ballsize);
 			}
-			if (ballsize2!=-1){
+			if (ballsize2 != -1) {
 				Vector3 ballpos = MovementMath.lengthDir(playerrot2, 40f);
-				if(mycolor.equals("red"))
-					batch.draw(balltext2, player2.x + ballpos.x + playerSprite2.getWidth() / 2 - ballsize2 / 2,player2.y + ballpos.y + playerSprite2.getHeight() / 2 - ballsize2 / 2, ballsize2, ballsize2);
+				if (mycolor.equals("red"))
+					batch.draw(balltext2, player2.x + ballpos.x + playerSprite2.getWidth() / 2 - ballsize2 / 2, player2.y + ballpos.y + playerSprite2.getHeight() / 2 - ballsize2 / 2, ballsize2, ballsize2);
 				else
-					batch.draw(balltext, player2.x + ballpos.x + playerSprite2.getWidth() / 2 - ballsize2 / 2,player2.y + ballpos.y + playerSprite2.getHeight() / 2 - ballsize2 / 2, ballsize2, ballsize2);
+					batch.draw(balltext, player2.x + ballpos.x + playerSprite2.getWidth() / 2 - ballsize2 / 2, player2.y + ballpos.y + playerSprite2.getHeight() / 2 - ballsize2 / 2, ballsize2, ballsize2);
 			}
 			if (playerpowercooldown != -1)
-				game.font.draw(batch, (1 + (int) playerpowercooldown / 4) + "", player.x + 16,player.y + player.radius * 2 + 24);
+				game.font.draw(batch, (1 + (int) playerpowercooldown / 4) + "", player.x + 16, player.y + player.radius * 2 + 24);
 			if (dashcooldown > 0)
 				game.font.draw(batch, "" + (1 + (int) dashcooldown / 4), player.x + 24, player.y);
-			
-				batch.end();
+
+			batch.end();
 
 			game.batch.begin();
 			game.font.draw(game.batch, "Points: " + points, 10, 470);
-			game.font.draw(game.batch, socket.toString(), 0, 300);
 			game.font.draw(game.batch, "Opponent Points: " + points2, 440, 470);
+			//debugger for html
+			//game.font.draw(game.batch, mystring + " " + mynum+" "+array, 0, 200);
 			game.batch.end();
 		}
 	}
@@ -687,7 +705,7 @@ public class GameScreenMulti implements Screen {
 			color = col;
 			if (col.equals("red")) {
 				ballsprite = new Sprite(balltext);
-			} else if (col.equals("blue")){
+			} else if (col.equals("blue")) {
 				ballsprite = new Sprite(balltext2);
 			}
 		}
@@ -723,14 +741,5 @@ public class GameScreenMulti implements Screen {
 			}
 			return 0f;
 		}
-	}
-	public int parseInt(String str){
-		int ret = 0;
-		int power = 0;
-		for(int i  = str.length()-1; i>=0;i--){
-			power = (int)Math.pow(10.0,(str.length()-1)-i);
-			ret+=str.charAt(i)*power;
-		}
-		return ret;
 	}
 }

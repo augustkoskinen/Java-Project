@@ -14,9 +14,6 @@ public class DesktopLauncher {
 		config.setWindowedMode(800, 480);
 		config.useVsync(true);
 		config.setTitle("Dodgeball");
-		new Lwjgl3Application(new DodgeballGame(), config);
-	}
-	void namer(){
-
+		new Lwjgl3Application(new DodgeballGame("desktop"), config);
 	}
 }
