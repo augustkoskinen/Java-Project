@@ -6,11 +6,8 @@ package com.dodgeball.game;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.Color;
-//import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.math.Vector3;
 
@@ -34,7 +31,8 @@ public class MainMenuScreen implements Screen {
 		game.setScreen(new GameScreen(game));
 
 		camera = new OrthographicCamera();
-		camera.setToOrtho(false, 800, 480);
+		//int aspectratio = 2500/Gdx.graphics.getWidth();
+		camera.setToOrtho(false, 800/*aspectratio*/, 480/*aspectratio*/);
 	}
 
 	@Override
@@ -46,6 +44,7 @@ public class MainMenuScreen implements Screen {
 		//draws things
 		camera.update();
 		game.batch.setProjectionMatrix(camera.combined);
+
 		game.batch.begin();
 		game.batch.draw(introtext, 0, 0, 800, 480);
 		game.batch.draw(button1v1, 152, 128, 96, 96);

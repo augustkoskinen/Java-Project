@@ -4,7 +4,7 @@ import { WebSocketServer } from 'ws';
 const wss = new WebSocketServer({ port: 8080 });
 let clients= []
 let rooms = []
-rooms.push(new Roomstruct(rooms,'room0'))
+rooms.push(new Roomstruct(rooms))
 
 console.log("Server is running...")
 
@@ -14,7 +14,6 @@ wss.on('connection', function connection(ws) {
     console.log("Connected Player")
     clients.push(new Player(uuidv4(), 0, 0, 0, rooms[rooms.length-1].room,ws));
     rooms[rooms.length-1].clientlist.push(clients[clients.length-1].id)
-    console.log(rooms)
     //let playerindex = findWS(clients,ws)
 
     //sending details ot client
@@ -60,7 +59,7 @@ wss.on('connection', function connection(ws) {
         }
         ws.send(JSON.stringify(senddata));
 
-        rooms.push(rooms,new Roomstruct(rooms,'room'+rooms.length))
+        rooms.push(rooms,new Roomstruct(rooms))
     }
 
     ws.on('error', console.error);
@@ -198,7 +197,6 @@ wss.on('connection', function connection(ws) {
             rooms.splice(findRoom(rooms,clients[disclient].room),1)
         }
         clients.splice(disclient,1);
-        console.log(rooms)
         console.log("Disconnected Player")
     });
 
@@ -262,11 +260,10 @@ function Player(id, x, y,rot,room,ws){
 }
 
 //room object
-function Roomstruct(rooms,room){
+function Roomstruct(rooms){
     this.time = 0;
     this.tilerects = [25];
     this.rantile = Math.floor(Math.random()*25);
-    this.room = room;
     this.clientlist = [];
     for(let i  = 0; i <25;i++){
         this.tilerects[i] = {
@@ -275,5 +272,14 @@ function Roomstruct(rooms,room){
             x:(((i % 5) * 196) + 64),
             y:(Math.floor(i / 5) * 196 + 64),
         }
+    }
+
+    this.room ="";
+    for(let i  = 0; i<rooms.length;i++) {
+        if (!findRoom(rooms, "room" + i))
+            this.room = "room" + i;
+    }
+    if(this.room===""){
+        this.room = "room"+rooms.length;
     }
 }
