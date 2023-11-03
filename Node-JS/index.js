@@ -78,7 +78,21 @@ wss.on('connection', function connection(ws) {
             case ('playermove') : {
                 //getting player data
                 
-                if (clients[playerindex].x == data.x && clients[playerindex].y == data.y && clients[playerindex].rotation == data.rotation && clients[playerindex].xadd2 == data.xadd2 && clients[playerindex].yadd2 == data.yadd2 && clients[playerindex].moveVectx == data.moveVectx && clients[playerindex].moveVecty == data.moveVecty && clients[playerindex].kbaddx == data.kbaddx && clients[playerindex].kbaddy == data.kbaddy && clients[playerindex].dashvelx == data.dashvelx && clients[playerindex].dashvely == data.dashvely && clients[playerindex].spawnprot == data.spawnprot && clients[playerindex].ballsize == data.ballsize && clients[playerindex].mytime == data.mytime) {
+                if (
+                    clients[playerindex].x == data.x &&
+                    clients[playerindex].y == data.y &&
+                    clients[playerindex].rotation == data.rotation &&
+                    clients[playerindex].xadd2 == data.xadd2 &&
+                    clients[playerindex].yadd2 == data.yadd2 &&
+                    clients[playerindex].moveVectx == data.moveVectx &&
+                    clients[playerindex].moveVecty == data.moveVecty &&
+                    clients[playerindex].kbaddx == data.kbaddx &&
+                    clients[playerindex].kbaddy == data.kbaddy &&
+                    clients[playerindex].dashvelx == data.dashvelx &&
+                    clients[playerindex].dashvely == data.dashvely &&
+                    clients[playerindex].spawnprot == data.spawnprot &&
+                    clients[playerindex].ballsize == data.ballsize &&
+                    clients[playerindex].mytime == data.mytime) {
                     return;
                 }
 

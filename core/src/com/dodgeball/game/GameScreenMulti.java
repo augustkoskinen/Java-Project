@@ -30,6 +30,7 @@ public class GameScreenMulti implements Screen {
 	//vars and objects
 	private float timelength = 0;
 	private WebSocket socket;
+	private String prevJSON = "";
 	private boolean start = false;
 	private boolean disconnected = false;
 	private String mycolor = "red";
@@ -480,9 +481,12 @@ public class GameScreenMulti implements Screen {
 				data.put("ballsize", new JSONString((-1f) + ""));
 			data.put("room", new JSONString(game.myroom));
 			data.put("time", new JSONString(Gdx.graphics.getDeltaTime() + ""));
-			String str;
 
-			socket.send(JsonUtils.stringify(data.getJavaScriptObject()));
+			String curJSON = JsonUtils.stringify(data.getJavaScriptObject());
+			if(!curJSON.equals(prevJSON)) {
+				prevJSON = curJSON;
+				socket.send(curJSON);
+			}
 			timelength -=0.015f;
 		}
 
