@@ -101,7 +101,7 @@ public class GameScreenMulti implements Screen {
 	public WebSocket configSocket() {
 		//localhost: ws://localhost:8080
 		//graham server: wss://game2.ejenda.org
-		WebSocket holdsocket = WebSockets.newSocket("wss://game2.ejenda.org");
+		WebSocket holdsocket = WebSockets.newSocket("ws://localhost:8080");
 		holdsocket.setSendGracefully(true);
 		holdsocket.addListener(new WebSocketListener() {
 			@Override
