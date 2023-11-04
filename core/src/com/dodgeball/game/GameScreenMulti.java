@@ -102,7 +102,7 @@ public class GameScreenMulti implements Screen {
 	public WebSocket configSocket() {
 		//localhost: ws://localhost:8080
 		//graham server: wss://game2.ejenda.org
-		WebSocket holdsocket = WebSockets.newSocket("wss://game2.ejenda.org");
+		WebSocket holdsocket = WebSockets.newSocket("ws://localhost:8080");
 		holdsocket.setSendGracefully(true);
 		holdsocket.addListener(new WebSocketListener() {
 			@Override
@@ -324,8 +324,8 @@ public class GameScreenMulti implements Screen {
 		if (moveVect.x != 0 || moveVect.y != 0) {
 			playerrot = MovementMath.pointDir(new Vector3(0, 0, 0), moveVect);
 			moveMag = MovementMath.lengthDir(playerrot, 1);
-			xadd = moveMag.x * SPEED * Gdx.graphics.getDeltaTime();
-			yadd = moveMag.y * SPEED * Gdx.graphics.getDeltaTime();
+			xadd = moveMag.x * SPEED;
+			yadd = moveMag.y * SPEED;
 		}
 
 		//dashes
@@ -343,15 +343,15 @@ public class GameScreenMulti implements Screen {
 		dashvel.y *= 0.8f;
 
 		//visible movement
-		player.x += xadd + kb.x * Gdx.graphics.getDeltaTime() + dashvel.x * Gdx.graphics.getDeltaTime();
-		player.y += yadd + kb.y * Gdx.graphics.getDeltaTime() + dashvel.y * Gdx.graphics.getDeltaTime();
+		player.x += (xadd + kb.x + dashvel.x) * Gdx.graphics.getDeltaTime();
+		player.y += (yadd + kb.y + dashvel.y) * Gdx.graphics.getDeltaTime();
 
 		playerSprite.setPosition(player.x, player.y);
 		if (moveVect.x != 0 || moveVect.y != 0) {
-			playerSprite.setRotation((float) Math.toDegrees((float) playerrot));
+			playerSprite.setRotation((float) Math.toDegrees(playerrot));
 		}
 		playerSprite2.setPosition(player2.x, player2.y);
-		playerSprite2.setRotation((float) Math.toDegrees((float) playerrot2));
+		playerSprite2.setRotation((float) Math.toDegrees(playerrot2));
 
 		//shoot ball
 		if (!Gdx.input.isKeyPressed(Input.Keys.F) && canreleaseball) {
@@ -383,12 +383,9 @@ public class GameScreenMulti implements Screen {
 			//socket data to send when player shoots
 			JSONObject data = new JSONObject();
 			data.put("event", new JSONString("shootmyball"));
-			data.put("id", new JSONString(myid));
-			data.put("otherid", new JSONString(otherid));
 			data.put("ballcount", new JSONString(ballamount + ""));
 			data.put("ballsize", new JSONString(ballsize + ""));
 			data.put("color", new JSONString(mycolor));
-			data.put("room", new JSONString(game.myroom));
 			socket.send(JsonUtils.stringify(data.getJavaScriptObject()));
 
 			canreleaseball = false;
@@ -426,37 +423,6 @@ public class GameScreenMulti implements Screen {
 		}
 
 		//socket data to send to server about player
-		/*
-		Timer.schedule(new Timer.Task() {
-		   @Override
-		   public void run() {
-			   JSONObject data = new JSONObject();
-			   data.put("event", new JSONString("playermove"));
-			   data.put("x", new JSONString(player.x + ""));
-			   data.put("y", new JSONString(player.y + ""));
-			   data.put("rotation", new JSONString(playerrot + ""));
-			   data.put("xadd2", new JSONString(xadd2 + ""));
-			   data.put("yadd2", new JSONString(yadd2 + ""));
-			   data.put("moveVectx", new JSONString(moveVectx + ""));
-			   data.put("moveVecty", new JSONString(moveVecty + ""));
-			   data.put("kbaddx", new JSONString(kbaddx + ""));
-			   data.put("kbaddy", new JSONString(kbaddy + ""));
-			   data.put("dashvelx", new JSONString(dashvel.x + ""));
-			   data.put("dashvely", new JSONString(dashvel.y + ""));
-			   data.put("spawnprot", new JSONString(spawnprot + ""));
-			   data.put("id", new JSONString(myid));
-			   data.put("otherid", new JSONString(otherid));
-			   if (canreleaseball)
-				   data.put("ballsize", new JSONString(ballsize + ""));
-			   else
-				   data.put("ballsize", new JSONString((-1f) + ""));
-			   data.put("room", new JSONString(game.myroom));
-
-			   socket.send(JsonUtils.stringify(data.getJavaScriptObject()));
-		   }
-	    },16);
-		*/
-
 		timelength+=Gdx.graphics.getDeltaTime();
 		if(timelength/0.015f>=1) {
 			JSONObject data = new JSONObject();
@@ -473,13 +439,13 @@ public class GameScreenMulti implements Screen {
 			data.put("dashvelx", new JSONString(dashvel.x + ""));
 			data.put("dashvely", new JSONString(dashvel.y + ""));
 			data.put("spawnprot", new JSONString(spawnprot + ""));
-			data.put("id", new JSONString(myid));
-			data.put("otherid", new JSONString(otherid));
+			//data.put("id", new JSONString(myid));
+			//data.put("otherid", new JSONString(otherid));
 			if (canreleaseball)
 				data.put("ballsize", new JSONString(ballsize + ""));
 			else
 				data.put("ballsize", new JSONString((-1f) + ""));
-			data.put("room", new JSONString(game.myroom));
+			//data.put("room", new JSONString(game.myroom));
 			data.put("time", new JSONString(Gdx.graphics.getDeltaTime() + ""));
 
 			String curJSON = JsonUtils.stringify(data.getJavaScriptObject());
@@ -638,8 +604,8 @@ public class GameScreenMulti implements Screen {
 				data.put("winnerid", new JSONString(otherid));
 				data.put("ran", new JSONString(random.nextInt(4) + ""));
 				data.put("rantile", new JSONString(random.nextInt(25) + ""));
-				data.put("id", new JSONString(myid));
-				data.put("otherid", new JSONString(otherid));
+				//data.put("id", new JSONString(myid));
+				//data.put("otherid", new JSONString(otherid));
 				socket.send(JsonUtils.stringify(data.getJavaScriptObject()));
 			}
 

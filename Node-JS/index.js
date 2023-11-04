@@ -73,26 +73,27 @@ wss.on('connection', function connection(ws) {
         let playerindex = findWS(clients,ws)
         let roomloc = findRoom(rooms,clients[playerindex].room);
         let otherws = clients[findID(clients,clients[playerindex].otherid)].ws
+        let otherid = clients[playerindex].otherid;
+        let id = clients[playerindex].id;
 
         switch (data.event) {
             case ('playermove') : {
                 //getting player data
-                
                 if (
-                    clients[playerindex].x == data.x &&
-                    clients[playerindex].y == data.y &&
-                    clients[playerindex].rotation == data.rotation &&
-                    clients[playerindex].xadd2 == data.xadd2 &&
-                    clients[playerindex].yadd2 == data.yadd2 &&
-                    clients[playerindex].moveVectx == data.moveVectx &&
-                    clients[playerindex].moveVecty == data.moveVecty &&
-                    clients[playerindex].kbaddx == data.kbaddx &&
-                    clients[playerindex].kbaddy == data.kbaddy &&
-                    clients[playerindex].dashvelx == data.dashvelx &&
-                    clients[playerindex].dashvely == data.dashvely &&
-                    clients[playerindex].spawnprot == data.spawnprot &&
-                    clients[playerindex].ballsize == data.ballsize &&
-                    clients[playerindex].mytime == data.mytime) {
+                    clients[playerindex].x === data.x &&
+                    clients[playerindex].y === data.y &&
+                    clients[playerindex].rotation === data.rotation &&
+                    clients[playerindex].xadd2 === data.xadd2 &&
+                    clients[playerindex].yadd2 === data.yadd2 &&
+                    clients[playerindex].moveVectx === data.moveVectx &&
+                    clients[playerindex].moveVecty === data.moveVecty &&
+                    clients[playerindex].kbaddx === data.kbaddx &&
+                    clients[playerindex].kbaddy === data.kbaddy &&
+                    clients[playerindex].dashvelx === data.dashvelx &&
+                    clients[playerindex].dashvely === data.dashvely &&
+                    clients[playerindex].spawnprot === data.spawnprot &&
+                    clients[playerindex].ballsize === data.ballsize &&
+                    clients[playerindex].mytime === data.mytime) {
                     return;
                 }
 
@@ -129,7 +130,7 @@ wss.on('connection', function connection(ws) {
                 //preparing sending struct
                 senddata = {
                     event: 'movement',
-                    id: data.otherid,
+                    id: otherid,
                     x: data.x,
                     y: data.y,
                     rotation: data.rotation,
@@ -169,7 +170,7 @@ wss.on('connection', function connection(ws) {
                 //sending data for shoot
                 let senddata = {
                     event:'shootBullet',
-                    id: clients[findWS(clients,ws)].id,
+                    id: id,
                     ballcount: data.ballcount,
                     ballsize: data.ballsize,
                     color: data.color
