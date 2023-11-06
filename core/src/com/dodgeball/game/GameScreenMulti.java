@@ -348,9 +348,7 @@ public class GameScreenMulti implements Screen {
 		player.y += (yadd + kb.y + dashvel.y) * Gdx.graphics.getDeltaTime();
 
 		playerSprite.setPosition(player.x, player.y);
-		if (moveVect.x != 0 || moveVect.y != 0) {
-			playerSprite.setRotation((float) Math.toDegrees(playerrot));
-		}
+		playerSprite.setRotation((float) Math.toDegrees(playerrot));
 		playerSprite2.setPosition(player2.x, player2.y);
 		playerSprite2.setRotation((float) Math.toDegrees(playerrot2));
 
