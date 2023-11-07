@@ -3,6 +3,7 @@ package com.dodgeball.game;
 import java.util.*;
 import static java.lang.Float.parseFloat;
 
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.utils.Timer;
 import com.google.gwt.core.client.JsonUtils;
 import com.google.gwt.json.client.JSONObject;
@@ -35,7 +36,9 @@ public class GameScreenMulti implements Screen {
 	private boolean disconnected = false;
 	private String mycolor = "red";
 	private String myid = "";
+	private String othername = "";
 	private String otherid = "";
+	private GlyphLayout textlayout;
 	private boolean createdplayers = false;
 
 	static final int WORLD_WIDTH = 1108;
@@ -102,7 +105,7 @@ public class GameScreenMulti implements Screen {
 	public WebSocket configSocket() {
 		//localhost: ws://localhost:8080
 		//graham server: wss://game2.ejenda.org
-		WebSocket holdsocket = WebSockets.newSocket("wss://game2.ejenda.org");
+		WebSocket holdsocket = WebSockets.newSocket("ws://localhost:8080");
 		holdsocket.setSendGracefully(true);
 		holdsocket.addListener(new WebSocketListener() {
 			@Override
@@ -155,6 +158,16 @@ public class GameScreenMulti implements Screen {
 					int seed = (int) data.get("seed").isNumber().doubleValue();
 					random = new Random(seed);
 					rantile = random.nextInt(25);
+
+					JSONObject senddata = new JSONObject();
+					senddata.put("event", new JSONString("sendPlayerName"));
+					senddata.put("name", new JSONString(game.myname));
+					socket.send(JsonUtils.stringify(senddata.getJavaScriptObject()));
+				}
+				if(event.equals("getOtherName")){
+					othername = data.get("othername").isString().stringValue();
+					textlayout = new GlyphLayout();
+					textlayout.setText(game.font,othername);
 				}
 
 				//movement event
@@ -336,12 +349,12 @@ public class GameScreenMulti implements Screen {
 		}
 
 		//limits
-		kb.x *= 0.8f;
-		kb.y *= 0.8f;
-		kbaddx *= 0.5f;
-		kbaddy *= 0.5f;
-		dashvel.x *= 0.8f;
-		dashvel.y *= 0.8f;
+		kb.x *= 100f* Gdx.graphics.getDeltaTime();
+		kb.y *= 100f* Gdx.graphics.getDeltaTime();
+		kbaddx *= 62.5f* Gdx.graphics.getDeltaTime();
+		kbaddy *= 62.5f* Gdx.graphics.getDeltaTime();
+		dashvel.x *= 100f* Gdx.graphics.getDeltaTime();
+		dashvel.y *= 100f* Gdx.graphics.getDeltaTime();
 
 		//visible movement
 		player.x += (xadd + kb.x + dashvel.x) * Gdx.graphics.getDeltaTime();
@@ -553,7 +566,7 @@ public class GameScreenMulti implements Screen {
 				curball.circ.x += curball.velocity.x * Gdx.graphics.getDeltaTime();
 				curball.circ.y += curball.velocity.y * Gdx.graphics.getDeltaTime();
 				curball.ballsprite.setPosition(curball.circ.x, curball.circ.y);
-				if (curball.circ.x < -10 && curball.circ.y < -10 && curball.circ.x > 1120 && curball.circ.x > 1120) {
+				if (curball.circ.x < -64 || curball.circ.y < -64 || curball.circ.x > WORLD_WIDTH+64 || curball.circ.y > WORLD_HEIGHT+64) {
 					iter.remove();
 				} else if (MovementMath.lineCol(pastcirc, new Vector3(curball.circ.x, curball.circ.y, 0), player) || MovementMath.overlaps(player, curball.circ)) {
 					if (spawnprot <= 0) {
@@ -571,7 +584,7 @@ public class GameScreenMulti implements Screen {
 				curball.circ.x += curball.velocity.x * Gdx.graphics.getDeltaTime();
 				curball.circ.y += curball.velocity.y * Gdx.graphics.getDeltaTime();
 				curball.ballsprite.setPosition(curball.circ.x, curball.circ.y);
-				if (curball.circ.x < -10 && curball.circ.y < -10 && curball.circ.x > 1120 && curball.circ.x > 1120) {
+				if (curball.circ.x < -64 || curball.circ.y < -64 || curball.circ.x > WORLD_WIDTH+64 || curball.circ.y > WORLD_HEIGHT+64) {
 					iter.remove();
 				} else if (MovementMath.lineCol(pastcirc, new Vector3(curball.circ.x, curball.circ.y, 0), player2) || MovementMath.overlaps(player2, curball.circ)) {
 					iter.remove();
@@ -658,6 +671,7 @@ public class GameScreenMulti implements Screen {
 			if (dashcooldown > 0)
 				game.font.draw(batch, "" + (1 + (int) dashcooldown / 4), player.x + 24, player.y);
 
+			game.font.draw(batch,othername, player2.x + (playerSprite2.getWidth() / 2) - (textlayout.width/2), player2.y + playerSprite2.getHeight() + 24);
 			batch.end();
 
 			//draws points to game screen

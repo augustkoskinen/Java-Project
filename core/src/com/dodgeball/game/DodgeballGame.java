@@ -11,6 +11,7 @@ public class DodgeballGame extends Game {
 	public BitmapFont font;
 	public BitmapFont introfont;
 	public String myroom;
+	public String myname = "";
 
 	public String launcher = "";
 
@@ -27,7 +28,7 @@ public class DodgeballGame extends Game {
 		font = new BitmapFont(Gdx.files.internal("GameFont.fnt"),Gdx.files.internal("GameFont.png"), false);
 		font.setColor(1,1,1,1);
 		font.getData().setScale(.4f,.4f);
-		this.setScreen(new MainMenuScreen(this,"html"));
+		this.setScreen(new MainMenuScreen(this));
 	}
 
 	//main renderer

@@ -24,7 +24,7 @@ wss.on('connection', function connection(ws) {
     }
     ws.send(JSON.stringify(senddata));
 
-    //start game if there are two plaeyrs
+    //start game if there are two players
     if(clients.length%2===0){
         let client = findID(clients,rooms[rooms.length-1].clientlist[0])
         let client2 = findID(clients,rooms[rooms.length-1].clientlist[1])
@@ -42,7 +42,8 @@ wss.on('connection', function connection(ws) {
         otherws.send(JSON.stringify(senddata));
         senddata = {
             event: 'startGame',
-            seed: seed
+            seed: seed,
+            othername: clients[client].name
         }
         otherws.send(JSON.stringify(senddata));
 
@@ -55,7 +56,8 @@ wss.on('connection', function connection(ws) {
         ws.send(JSON.stringify(senddata));
         senddata = {
             event: 'startGame',
-            seed: seed
+            seed: seed,
+            othername: clients[client].name
         }
         ws.send(JSON.stringify(senddata));
 
@@ -77,6 +79,17 @@ wss.on('connection', function connection(ws) {
         let id = clients[playerindex].id;
 
         switch (data.event) {
+            case ('sendPlayerName'):{
+                clients[playerindex].name = data.name;
+                senddata = {
+                    event: 'getOtherName',
+                    othername: clients[playerindex].name
+                };
+
+                //sending data to clients
+                otherws.send(JSON.stringify(senddata));
+                break;
+            }
             case ('playermove') : {
                 //getting player data
                 if (
@@ -277,6 +290,7 @@ function Player(id, x, y,rot,room,ws){
     this.mytime = 0;
     this.otherid = "";
     this.room = room;
+    this.name = "";
 }
 
 //room object
