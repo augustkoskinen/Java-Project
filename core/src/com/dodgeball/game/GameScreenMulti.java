@@ -349,12 +349,13 @@ public class GameScreenMulti implements Screen {
 		}
 
 		//limits
-		kb.x *= 100f* Gdx.graphics.getDeltaTime();
-		kb.y *= 100f* Gdx.graphics.getDeltaTime();
-		kbaddx *= 62.5f* Gdx.graphics.getDeltaTime();
-		kbaddy *= 62.5f* Gdx.graphics.getDeltaTime();
-		dashvel.x *= 100f* Gdx.graphics.getDeltaTime();
-		dashvel.y *= 100f* Gdx.graphics.getDeltaTime();
+		//100f* Gdx.graphics.getDeltaTime()
+		kb.x *= .8f;
+		kb.y *= .8f;
+		kbaddx *= .5f;
+		kbaddy *= .5f;
+		dashvel.x *= .8f;
+		dashvel.y *= .8f;
 
 		//visible movement
 		player.x += (xadd + kb.x + dashvel.x) * Gdx.graphics.getDeltaTime();
@@ -639,7 +640,7 @@ public class GameScreenMulti implements Screen {
 				spawnprot -= Gdx.graphics.getDeltaTime() * 10;
 			}
 			if (playerpowercooldown > 0) {
-				playerpowercooldown -= Gdx.graphics.getDeltaTime();
+				playerpowercooldown -= Gdx.graphics.getDeltaTime()*.75f;
 			} else {
 				playerpower = -1;
 				playerpowercooldown = -1;
@@ -648,7 +649,7 @@ public class GameScreenMulti implements Screen {
 			//changes ball sized based on if holding down shoot button
 			if (canreleaseball) {
 				if (ballsize < 80)
-					ballsize += Gdx.graphics.getDeltaTime() * 10;
+					ballsize += Gdx.graphics.getDeltaTime() * 15;
 				Vector3 ballpos = MovementMath.lengthDir(playerrot, 40f);
 				if (mycolor.equals("red"))
 					batch.draw(balltext, player.x + ballpos.x + playerSprite.getWidth() / 2 - ballsize / 2, player.y + ballpos.y + playerSprite.getHeight() / 2 - ballsize / 2, ballsize, ballsize);
