@@ -105,7 +105,7 @@ public class GameScreenMulti implements Screen {
 	public WebSocket configSocket() {
 		//localhost: ws://localhost:8080
 		//graham server: wss://game2.ejenda.org
-		WebSocket holdsocket = WebSockets.newSocket("ws://localhost:8080");
+		WebSocket holdsocket = WebSockets.newSocket("wss://game2.ejenda.org");
 		holdsocket.setSendGracefully(true);
 		holdsocket.addListener(new WebSocketListener() {
 			@Override
@@ -356,7 +356,7 @@ public class GameScreenMulti implements Screen {
 		kbaddy *= .5f*(75f/Gdx.graphics.getFramesPerSecond());
 		dashvel.x *= .8f*(75f/Gdx.graphics.getFramesPerSecond());
 		dashvel.y *= .8f*(75f/Gdx.graphics.getFramesPerSecond());
-ds
+
 		//visible movement
 		player.x += (xadd + kb.x + dashvel.x) * Gdx.graphics.getDeltaTime();
 		player.y += (yadd + kb.y + dashvel.y) * Gdx.graphics.getDeltaTime();
