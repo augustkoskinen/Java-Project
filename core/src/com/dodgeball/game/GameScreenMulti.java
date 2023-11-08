@@ -30,8 +30,6 @@ import com.badlogic.gdx.Input;
 public class GameScreenMulti implements Screen {
 	//vars and objects
 	private float timelength = 0;
-	private float fpslimit = 0.01428571428f;
-	private float fpscount = 0;
 	private WebSocket socket;
 	private String prevJSON = "";
 	private boolean start = false;
@@ -169,7 +167,6 @@ public class GameScreenMulti implements Screen {
 				}
 				if(event.equals("getOtherName")){
 					othername = data.get("othername").isString().stringValue();
-					textlayout = new GlyphLayout();
 					textlayout.setText(game.font,othername);
 				}
 
@@ -326,6 +323,8 @@ public class GameScreenMulti implements Screen {
 		balltext = new Texture(Gdx.files.internal("redball.png"));
 		balltext2 = new Texture(Gdx.files.internal("blueball.png"));
 		tiletexture = new Texture("Tiles.png");
+		textlayout = new GlyphLayout();
+		textlayout.setText(game.font,othername);
 	}
 
 	private void handleInput() {
@@ -515,12 +514,8 @@ public class GameScreenMulti implements Screen {
 				cam.position.set(player.x + player.radius, player.y + player.radius, 0);
 			}
 
-			fpscount +=Gdx.graphics.getDeltaTime();
-			if(fpscount>=fpslimit) {
-				//movement
-				handleInput();
-				fpscount-=fpslimit;
-			}
+			//movement
+			handleInput();
 
 			//updates cam pos
 			cam.update();

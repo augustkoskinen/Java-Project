@@ -72,7 +72,7 @@ public class MainMenuScreen implements Screen {
 			game.batch.draw(button1v1, 152, 128, 96, 96);
 			game.batch.draw(buttononline, 552, 128, 96, 96);
 			game.batch.draw(rulebutton, 700, 4f, 96, 96);
-		} else {
+		} else if (choosingname){
 			game.font.draw(game.batch,"Enter name: \n"+myname,(400f)-(textlayout.width/2),240f);
 		}
 		if(touchingbutton) {
@@ -81,26 +81,28 @@ public class MainMenuScreen implements Screen {
 		game.batch.end();
 
 		//senses if starting a 1v1 game or online game
-		if (Gdx.input.isTouched()&&MovementMath.pointDis(new Vector3(200f*(Gdx.graphics.getWidth()/800f),304f*(Gdx.graphics.getHeight()/480f),0f),new Vector3(Gdx.input.getX(),Gdx.input.getY(),0f))<48f*(Gdx.graphics.getWidth()/800f)){
-			game.setScreen(new GameScreen(game));
-			choosingname = true;
-			startinggame = true;
-			dispose();
-		} else if (Gdx.input.isTouched() && MovementMath.pointDis(new Vector3(600f*(Gdx.graphics.getWidth()/800f),304f*(Gdx.graphics.getHeight()/480f),0f),new Vector3(Gdx.input.getX(),Gdx.input.getY(),0f))<48f*(Gdx.graphics.getWidth()/800f)) {
-			choosingname = true;
-			startinggame = true;
-			textlayout = new GlyphLayout();
-			dispose();
+		if(!startinggame) {
+			if (Gdx.input.isTouched() && MovementMath.pointDis(new Vector3(200f * (Gdx.graphics.getWidth() / 800f), 304f * (Gdx.graphics.getHeight() / 480f), 0f), new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0f)) < 48f * (Gdx.graphics.getWidth() / 800f)) {
+				game.setScreen(new GameScreen(game));
+				startinggame = true;
+				dispose();
+			} else if (Gdx.input.isTouched() && MovementMath.pointDis(new Vector3(600f * (Gdx.graphics.getWidth() / 800f), 304f * (Gdx.graphics.getHeight() / 480f), 0f), new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0f)) < 48f * (Gdx.graphics.getWidth() / 800f)) {
+				choosingname = true;
+				startinggame = true;
+				textlayout = new GlyphLayout();
+				dispose();
+			}
 		}
 		if (choosingname&&startinggame){
 			String justpressed = getKeyPressed();
 			if(justpressed.equals("enter")){
 				game.myname = myname;
 				game.setScreen(new GameScreenMulti(game));
+				choosingname = false;
 			} else if(justpressed.equals("back")){
 				//myname+="back";
-				myname = myname.substring(0,myname.length()-3);
-				textlayout.setText(game.introfont,myname);
+				//myname = myname.substring(0,myname.length()-3);
+				//textlayout.setText(game.introfont,myname);
 			} else {
 				myname+=justpressed;
 				textlayout.setText(game.introfont,myname);

@@ -43,7 +43,6 @@ wss.on('connection', function connection(ws) {
         senddata = {
             event: 'startGame',
             seed: seed,
-            othername: clients[client].name
         }
         otherws.send(JSON.stringify(senddata));
 
@@ -57,7 +56,6 @@ wss.on('connection', function connection(ws) {
         senddata = {
             event: 'startGame',
             seed: seed,
-            othername: clients[client].name
         }
         ws.send(JSON.stringify(senddata));
 
