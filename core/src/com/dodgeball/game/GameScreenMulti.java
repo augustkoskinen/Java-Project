@@ -105,7 +105,7 @@ public class GameScreenMulti implements Screen {
 	public WebSocket configSocket() {
 		//localhost: ws://localhost:8080
 		//graham server: wss://game2.ejenda.org
-		WebSocket holdsocket = WebSockets.newSocket("wss://game2.ejenda.org");
+		WebSocket holdsocket = WebSockets.newSocket("ws://localhost:8080");
 		holdsocket.setSendGracefully(true);
 		holdsocket.addListener(new WebSocketListener() {
 			@Override
@@ -343,20 +343,20 @@ public class GameScreenMulti implements Screen {
 		playerrot = MovementMath.pointDir(new Vector3(Gdx.graphics.getWidth()/2f, (Gdx.graphics.getHeight()/2f), 0), new Vector3(Gdx.input.getX(), Gdx.graphics.getHeight()-Gdx.input.getY(), 0));
 
 		//dashes
-		if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && dashcooldown <= 0 && (moveVect.x != 0 || moveVect.y != 0)) {
+		if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && dashcooldown <= 0 && (moveVect.x != 0 || moveVect.y != 0)) {
 			dashvel = new Vector3(moveMag.x * DASHSPEED, moveMag.y * DASHSPEED, 0);
 			dashcooldown = 20;
 		}
 
 		//limits
 		//100f* Gdx.graphics.getDeltaTime()
-		kb.x *= .8f;
-		kb.y *= .8f;
-		kbaddx *= .5f;
-		kbaddy *= .5f;
-		dashvel.x *= .8f;
-		dashvel.y *= .8f;
-
+		kb.x *= Math.min(.85f*(Gdx.graphics.getFramesPerSecond()/75f),.99f);
+		kb.y *= Math.min(.85f*(Gdx.graphics.getFramesPerSecond()/75f),.99f);
+		kbaddx *= .5f*(75f/Gdx.graphics.getFramesPerSecond());
+		kbaddy *= .5f*(75f/Gdx.graphics.getFramesPerSecond());
+		dashvel.x *= .8f*(75f/Gdx.graphics.getFramesPerSecond());
+		dashvel.y *= .8f*(75f/Gdx.graphics.getFramesPerSecond());
+ds
 		//visible movement
 		player.x += (xadd + kb.x + dashvel.x) * Gdx.graphics.getDeltaTime();
 		player.y += (yadd + kb.y + dashvel.y) * Gdx.graphics.getDeltaTime();
@@ -672,7 +672,7 @@ public class GameScreenMulti implements Screen {
 			if (dashcooldown > 0)
 				game.font.draw(batch, "" + (1 + (int) dashcooldown / 4), player.x + 24, player.y);
 
-			game.font.draw(batch,othername, player2.x + (playerSprite2.getWidth() / 2) - (textlayout.width/2), player2.y + playerSprite2.getHeight() + 24);
+			game.font.draw(batch, othername, player2.x + (playerSprite2.getWidth() / 2) - (textlayout.width/2), player2.y + playerSprite2.getHeight() + 24);
 			batch.end();
 
 			//draws points to game screen

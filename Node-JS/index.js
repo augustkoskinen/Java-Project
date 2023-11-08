@@ -4,6 +4,7 @@ import { WebSocketServer } from 'ws';
 const wss = new WebSocketServer({ port: 8080 });
 let clients= []
 let rooms = []
+let prevclient = []
 rooms.push(new Roomstruct(rooms))
 
 console.log("Server is running...")
@@ -13,7 +14,6 @@ wss.on('connection', function connection(ws) {
     //connecting a new player
     console.log("Connected Player")
     clients.push(new Player(uuidv4(), 0, 0, 0, rooms[rooms.length-1].room,ws));
-    rooms[rooms.length-1].clientlist.push(clients[clients.length-1].id)
     //let playerindex = findWS(clients,ws)
 
     //sending details ot client
@@ -23,11 +23,11 @@ wss.on('connection', function connection(ws) {
         room: clients[clients.length-1].room
     }
     ws.send(JSON.stringify(senddata));
-
+    prevclient.push(clients.length-1)
     //start game if there are two players
     if(clients.length%2===0){
-        let client = findID(clients,rooms[rooms.length-1].clientlist[0])
-        let client2 = findID(clients,rooms[rooms.length-1].clientlist[1])
+        let client = prevclient[0]
+        let client2 = prevclient[1]
         clients[client].otherid = clients[client2].id
         clients[client2].otherid = clients[client].id
         let seed = Math.floor(Math.random() * 10000)
@@ -62,6 +62,7 @@ wss.on('connection', function connection(ws) {
         ws.send(JSON.stringify(senddata));
 
         rooms.push(rooms,new Roomstruct(rooms))
+        prevclient = []
     }
 
     ws.on('error', console.error);
@@ -222,12 +223,21 @@ wss.on('connection', function connection(ws) {
             let senddata = {
                 event: 'disconnecting',
             }
+
             ws.send(JSON.stringify(senddata));
             otherws.send(JSON.stringify(senddata))
+
             ws.close();
             otherws.close();
-        } else {
+        } else if(clients[disclient].otherid!==""){
             rooms.splice(findRoom(rooms,clients[disclient].room),1)
+        } else if(clients[disclient].otherid===""){
+            let senddata = {
+                event: 'disconnecting',
+            }
+            ws.send(JSON.stringify(senddata));
+            ws.close();
+            prevclient.splice(prevclient.length-1,1)
         }
         clients.splice(disclient,1);
         console.log("Disconnected Player")
@@ -298,7 +308,6 @@ function Roomstruct(rooms){
     this.time = 0;
     this.tilerects = [25];
     this.rantile = Math.floor(Math.random()*25);
-    this.clientlist = [];
     for(let i  = 0; i <25;i++){
         this.tilerects[i] = {
             width:196,
