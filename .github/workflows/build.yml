@@ -18,3 +18,14 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./html/build/dist
+          name: Deploy to Server
+      - name: Run deployment webhook
+        env:
+          TOKEN: ${{ secrets.TOKEN }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref }}
+        run: |
+          echo "Running webhook, see result below..."
+          echo "Repo: $REPO"
+          wget --content-on-error -q -O - "https://deploy.grahamsh.com/" --method POST --header 'content-type: application/json' --body-data "{\"token\": \"$TOKEN\"}"
+
