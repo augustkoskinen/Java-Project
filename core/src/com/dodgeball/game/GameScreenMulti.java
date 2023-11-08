@@ -30,6 +30,8 @@ import com.badlogic.gdx.Input;
 public class GameScreenMulti implements Screen {
 	//vars and objects
 	private float timelength = 0;
+	private float fpslimit = 0.01428571428f;
+	private float fpscount = 0;
 	private WebSocket socket;
 	private String prevJSON = "";
 	private boolean start = false;
@@ -105,6 +107,7 @@ public class GameScreenMulti implements Screen {
 	public WebSocket configSocket() {
 		//localhost: ws://localhost:8080
 		//graham server: wss://game2.ejenda.org
+
 		WebSocket holdsocket = WebSockets.newSocket("wss://game2.ejenda.org");
 		holdsocket.setSendGracefully(true);
 		holdsocket.addListener(new WebSocketListener() {
@@ -299,7 +302,6 @@ public class GameScreenMulti implements Screen {
 		});
 
 		holdsocket.connect();
-
 		return holdsocket;
 	}
 
@@ -350,12 +352,12 @@ public class GameScreenMulti implements Screen {
 
 		//limits
 		//100f* Gdx.graphics.getDeltaTime()
-		kb.x *= Math.min(.85f*(Gdx.graphics.getFramesPerSecond()/75f),.99f);
-		kb.y *= Math.min(.85f*(Gdx.graphics.getFramesPerSecond()/75f),.99f);
-		kbaddx *= .5f*(75f/Gdx.graphics.getFramesPerSecond());
-		kbaddy *= .5f*(75f/Gdx.graphics.getFramesPerSecond());
-		dashvel.x *= .8f*(75f/Gdx.graphics.getFramesPerSecond());
-		dashvel.y *= .8f*(75f/Gdx.graphics.getFramesPerSecond());
+		kb.x *= .85f;
+		kb.y *= .85f;
+		kbaddx *= .5f;
+		kbaddy *= .5f;
+		dashvel.x *= .85f;
+		dashvel.y *= .85f;
 
 		//visible movement
 		player.x += (xadd + kb.x + dashvel.x) * Gdx.graphics.getDeltaTime();
@@ -513,8 +515,12 @@ public class GameScreenMulti implements Screen {
 				cam.position.set(player.x + player.radius, player.y + player.radius, 0);
 			}
 
-			//movement
-			handleInput();
+			fpscount +=Gdx.graphics.getDeltaTime();
+			if(fpscount>=fpslimit) {
+				//movement
+				handleInput();
+				fpscount-=fpslimit;
+			}
 
 			//updates cam pos
 			cam.update();
