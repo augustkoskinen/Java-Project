@@ -73,7 +73,7 @@ public class MainMenuScreen implements Screen {
 			game.batch.draw(buttononline, 552, 128, 96, 96);
 			game.batch.draw(rulebutton, 700, 4f, 96, 96);
 		} else if (choosingname){
-			game.font.draw(game.batch,"Enter name: \n"+myname,(400f)-(textlayout.width/2),240f);
+			game.font.draw(game.batch,"Enter 8 character name: \n"+myname,(300f)-(textlayout.width/2),240f);
 		}
 		if(touchingbutton) {
 			game.batch.draw(controllerpic, 556, 4, 240, 192);
@@ -100,10 +100,10 @@ public class MainMenuScreen implements Screen {
 				game.setScreen(new GameScreenMulti(game));
 				choosingname = false;
 			} else if(justpressed.equals("back")){
-				//myname+="back";
+				myname+="back";
 				//myname = myname.substring(0,myname.length()-3);
 				//textlayout.setText(game.introfont,myname);
-			} else {
+			} else if(myname.length()<9){
 				myname+=justpressed;
 				textlayout.setText(game.introfont,myname);
 			}
@@ -138,7 +138,7 @@ public class MainMenuScreen implements Screen {
 		buttononline.dispose();
 	}
 	public static String getKeyPressed(){
-		if(Gdx.input.isKeyJustPressed(Input.Keys.BACKSPACE)){
+		if(Gdx.input.isKeyJustPressed(Input.Keys.BACK)||Gdx.input.isKeyJustPressed(Input.Keys.BACKSPACE)||Gdx.input.isKeyJustPressed(Input.Keys.DEL)){
 			return "back";
 		}
 		if(Gdx.input.isKeyJustPressed(Input.Keys.A)){

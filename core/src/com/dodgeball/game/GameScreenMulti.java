@@ -344,7 +344,7 @@ public class GameScreenMulti implements Screen {
 		playerrot = MovementMath.pointDir(new Vector3(Gdx.graphics.getWidth()/2f, (Gdx.graphics.getHeight()/2f), 0), new Vector3(Gdx.input.getX(), Gdx.graphics.getHeight()-Gdx.input.getY(), 0));
 
 		//dashes
-		if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && dashcooldown <= 0 && (moveVect.x != 0 || moveVect.y != 0)) {
+		if (Gdx.input.isKeyJustPressed(Input.Keys.SHIFT_LEFT) && dashcooldown <= 0 && (moveVect.x != 0 || moveVect.y != 0)) {
 			dashvel = new Vector3(moveMag.x * DASHSPEED, moveMag.y * DASHSPEED, 0);
 			dashcooldown = 20;
 		}
@@ -368,7 +368,7 @@ public class GameScreenMulti implements Screen {
 		playerSprite2.setRotation((float) Math.toDegrees(playerrot2));
 
 		//shoot ball
-		if (!Gdx.input.isTouched() && canreleaseball) {
+		if (!Gdx.input.isKeyPressed(Input.Keys.SPACE)&& canreleaseball) {
 			int ballamount = 0;
 			if (playerpower == 0)
 				ballamount = 3;
@@ -403,12 +403,13 @@ public class GameScreenMulti implements Screen {
 			socket.send(JsonUtils.stringify(data.getJavaScriptObject()));
 
 			canreleaseball = false;
+
 			spawnprot = -1;
 			ballsize = 8;
 		}
 
 		//shoot release
-		if (Gdx.input.isTouched() && !canreleaseball) {
+		if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && !canreleaseball) {
 			canreleaseball = true;
 		}
 
