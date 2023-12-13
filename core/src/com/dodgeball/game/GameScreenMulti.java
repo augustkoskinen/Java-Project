@@ -368,7 +368,7 @@ public class GameScreenMulti implements Screen {
 		playerSprite2.setRotation((float) Math.toDegrees(playerrot2));
 
 		//shoot ball
-		if (!Gdx.input.isKeyPressed(Input.Keys.SPACE)&& canreleaseball) {
+		if ((!Gdx.input.isKeyPressed(Input.Keys.SPACE)&&!Gdx.input.isTouched())&& canreleaseball) {
 			int ballamount = 0;
 			if (playerpower == 0)
 				ballamount = 3;
@@ -409,7 +409,7 @@ public class GameScreenMulti implements Screen {
 		}
 
 		//shoot release
-		if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && !canreleaseball) {
+		if ((Gdx.input.isKeyPressed(Input.Keys.SPACE)||Gdx.input.isTouched()) && !canreleaseball) {
 			canreleaseball = true;
 		}
 
