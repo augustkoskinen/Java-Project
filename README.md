@@ -3,7 +3,7 @@
 Hi! This is a game that can either be plaeyd by two people online or two people playing on one computer. The goal of the game is to hit the other person off the tiles more than the other player does to you. You can charge up a shot to do more knockback. Tiles will sometimes disappear, but are reset once one player dies. Sometimes a power up appears, which shoots 3 bullets at once.
 Visit at: https://augustkoskinen.github.io/Java-Project.
 
-##_HTML Commands_
+## _HTML Commands_
 Command to run html debug:
 ```
 ./gradlew html:superDev
@@ -19,7 +19,7 @@ Command to run Node JS server within Node-JS directory:
 node .
 ```
 
-##_Desktop Commands_
+## _Desktop Commands_
 Command to run desktop debug (does not work currently):
 ```
 ./gradlew desktop:run
